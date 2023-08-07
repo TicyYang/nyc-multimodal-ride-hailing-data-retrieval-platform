@@ -1,4 +1,4 @@
-from holidays.countries import US
+# %% Import
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -128,8 +128,6 @@ yellow_202011 = remove_unknown_pu_zone(yellow_202011)
 green_202011 = remove_unknown_pu_zone(green_202011)
 
 # %% 檢查未知下車地點佔整體資料比例
-
-
 def check_unknown_do_zone(dataset):
     unknown_drop_zone = dataset[(dataset['DOLocationID'] == 264) | (
         dataset['DOLocationID'] == 265)]
@@ -154,8 +152,6 @@ check_unknown_do_zone(green_202011)
 # %% 刪除未知下車地點的records
 # 未知下車地點records較多，但保留沒有意義，刪除
 # 定義刪除用function
-
-
 def remove_unknown_do_zone(dataset):
     '''用function "check_unknown_do_zone"的回傳值，也就是包含未知下車地點的紀錄，作為參數'''
     dataset = dataset.drop(check_unknown_do_zone(dataset).index, axis=0)
@@ -248,6 +244,7 @@ def outlier_detect(data, col, attr, threshold=3):
                      process_data[col] < Lower_fence], axis=1)
     outlier_index = tmp.any(axis=1)
 
+
     print('Num of outlier detected:', outlier_index.value_counts()[1])
     print(
         f'Proportion of outlier detected: {round(outlier_index.value_counts()[1] / len(outlier_index) * 100, 5)}%')
@@ -281,6 +278,7 @@ def replace_outlier(data, col, process_data, outlier_index, para):
 # %%% 按「上下車同行政區 --> 上車或下車EWR --> 上下車不同行政區」的順序處理
 
 # 上下車同行政區
+print('上下車同行政區')
 for df in [uber_202011, lyft_202011, yellow_202011, green_202011]:
     print('------------------------------')
     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'same')
@@ -289,6 +287,7 @@ for df in [uber_202011, lyft_202011, yellow_202011, green_202011]:
 
 
 # 上車或下車為EWR
+print('上車或下車為EWR')
 # 小綠無明顯極端值，確認後可不處理
 green_202011[(green_202011['PUborough_id'] == 0) | (
     green_202011['DOborough_id'] == 0)]['trip_time(s)'].describe()
@@ -300,6 +299,7 @@ for df in [uber_202011, lyft_202011, yellow_202011]:
 
 
 # 上下車不同行政區
+print('上下車不同行政區')
 for df in [uber_202011, lyft_202011, yellow_202011, green_202011]:
     print('------------------------------')
     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'diff')
@@ -308,9 +308,6 @@ for df in [uber_202011, lyft_202011, yellow_202011, green_202011]:
 
 del process_data, index, para
 # %%% 繪圖查看插捕後分布
-for df in [uber_202011, lyft_202011, yellow_202011, green_202011]:
-    sns.histplot(df['trip_time(s)'])
-
 plt.figure(figsize=(8, 6))
 sns.histplot(uber_202011['trip_time(s)'],
              color='gray', alpha=0.7, label='Uber')
@@ -360,12 +357,9 @@ all_data = all_data.assign(year=all_data['pickup_datetime'].dt.year,
 
 # %% 節日標籤
 # %%% 聯邦法定節日
-# import holidays
-# ny_holidays = holidays.US(subdiv='NY', years=2020)
-# for date, name in sorted(ny_holidays.items()):
-#     print(date, name)
-
 # 定義聯邦法定節日，移除非法定節日
+from holidays.countries import US
+
 class FedHolidays(US):
     def _populate(self, year):
         super()._populate(year)
@@ -376,14 +370,13 @@ class FedHolidays(US):
 # 實例化FedHolidays
 ny_holidays_fed = FedHolidays(subdiv='NY', years=2020)
 # 查看
-print('---Federal New York Holidays---')
+print('-----Federal New York Holidays-----')
 for i in sorted(ny_holidays_fed.items()):
     print(i)
 print()
 
-# 定義所有節日
 
-
+# 定義所有節日，加入情人節、聖派翠克節、萬聖節、平安夜、跨年夜
 class AllHolidays(FedHolidays):
     def _populate(self, year):
         super()._populate(year)
@@ -391,12 +384,13 @@ class AllHolidays(FedHolidays):
         self._add_holiday("St.Patrick's Day", 3, 17)
         self._add_holiday("Halloween", 10, 31)
         self._add_holiday("Christmas Eve", 12, 24)
+        self._add_holiday("New Year's Eve", 12, 31)
 
 
 # 實例化AllHolidays
 ny_holidays_all = AllHolidays(subdiv='NY', years=2020)
 # 查看
-print('---All New York Holidays---')
+print('-----All New York Holidays-----')
 for j in sorted(ny_holidays_all.items()):
     print(j)
 
@@ -409,11 +403,38 @@ print(all_data['is_fed_holiday'].value_counts())
 all_data['is_holiday'] = np.where(all_data['pickup_datetime'].dt.date.isin(ny_holidays_all), True, False)
 print(all_data['is_holiday'].value_counts())
 
+# %% 假日標籤
+# 是聯邦法定節日或週六日，就標為假日
+all_data['is_day_off'] = np.where(
+    (all_data['is_fed_holiday']) | 
+    (all_data['weekday'].isin([5, 6])), 
+    True, False
+    )
+
 # %% 按日期時間計算總量
-# 按日期
+# %%% 按日期
 p_day = all_data.pivot_table(index='day', columns='service_type', aggfunc='size')
 
-# 按小時
+plt.figure(figsize=(8, 6))
+colors = ['gray', 'red', 'goldenrod', 'green']
+labels = ['Uber', 'Lyft', 'Yellow', 'Green']
+for i in range(4):
+    sns.lineplot(p_day.iloc[:, i], 
+                 color=colors[i], 
+                 label=labels[i], 
+                 marker='o')
+
+plt.title('Num per day', fontdict={'fontsize': 18})
+plt.xticks(p_day.index, fontsize=14)
+plt.yticks(fontsize=14)
+plt.xlabel('Day', fontdict={'fontsize': 16})
+plt.ylabel('Num', fontdict={'fontsize': 16})
+plt.legend(fontsize=16)
+plt.show()
+
+                            
+
+# %%% 按小時
 p_hour = all_data.pivot_table(index='hour', columns='service_type', aggfunc='size')
 
 p_hour.plot(kind='bar', rot=0, width=1, fontsize=14)
@@ -423,3 +444,5 @@ plt.ylabel('Counts', fontdict={'fontsize': 16})
 plt.legend(fontsize=16)
 
 # %% 測試
+
+
