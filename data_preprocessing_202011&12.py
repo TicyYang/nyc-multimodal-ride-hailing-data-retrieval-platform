@@ -28,27 +28,19 @@ yellow = pd.concat([yellow_202011, yellow_202012]).sort_values('tpep_pickup_date
 
 
 
-
-
-
-green_202011 = pd.read_parquet('../green_tripdata_2020-11.parquet', engine='pyarrow')
-green_202012 = pd.read_parquet('../green_tripdata_2020-12.parquet', engine='pyarrow')
-green = pd.concat([green_202011, green_202012]).sort_values('lpep_pickup_datetime').reset_index(drop=True)
-
-
-del fhvhv_202011, fhvhv_202012, fhvhv, yellow_202011, yellow_202012, green_202011, green_202012
+del fhvhv_202011, fhvhv_202012, fhvhv, yellow_202011, yellow_202012
 # %% 查看各Dataset紀錄數
-total_records = uber.shape[0] + lyft.shape[0] + yellow.shape[0] + green.shape[0]
+total_records = uber.shape[0] + lyft.shape[0] + yellow.shape[0]
 
 print(f'Uber: {uber.shape[0]} {round(uber.shape[0]/total_records*100, 2)}%')
 print(f'Lyft: {lyft.shape[0]} {round(lyft.shape[0]/total_records*100, 2)}%')
 print(f'Yellow: {yellow.shape[0]} {round(yellow.shape[0]/total_records*100, 2)}%')
-print(f'Green: {green.shape[0]} {round(green.shape[0]/total_records*100, 2)}%')
 print(f'Total: {total_records}')
-# Uber: 8375281
-# Lyft: 3090686
-# Yellow: 1509000
-# Green: 88605
+# Uber: 16861697 64.99%
+# Lyft: 6114098 23.56%
+# Yellow: 2970898 11.45%
+# Total: 25946693
+
 del total_records
 # %% 取需要的column
 uber = uber.loc[:, ['pickup_datetime', 'dropoff_datetime', 'PULocationID',
@@ -59,8 +51,6 @@ lyft = lyft.loc[:, ['pickup_datetime', 'dropoff_datetime', 'PULocationID',
                     'base_passenger_fare']]
 yellow = yellow.loc[:, ['tpep_pickup_datetime', 'tpep_dropoff_datetime', 'trip_distance',
                         'PULocationID', 'DOLocationID', 'fare_amount']]
-green = green.loc[:, ['lpep_pickup_datetime', 'lpep_dropoff_datetime', 'trip_distance',
-                      'PULocationID', 'DOLocationID', 'fare_amount']]
 
 # %% 欄位改名
 # Uber、Lyft行程時間、車資欄位改名
@@ -69,15 +59,12 @@ uber = uber.rename(columns={'trip_time': 'trip_time(s)',
 lyft = lyft.rename(columns={'trip_time': 'trip_time(s)',
                                           'base_passenger_fare': 'base_fare'})
 
-# 小黃、小綠上車時間、下車時間、行駛距離、車資欄位改名
+# 小黃上車時間、下車時間、行駛距離、車資欄位改名
 yellow = yellow.rename(columns={'tpep_pickup_datetime': 'pickup_datetime',
                                               'tpep_dropoff_datetime': 'dropoff_datetime',
                                               'trip_distance': 'trip_miles',
                                               'fare_amount': 'base_fare'})
-green = green.rename(columns={'lpep_pickup_datetime': 'pickup_datetime',
-                                            'lpep_dropoff_datetime': 'dropoff_datetime',
-                                            'trip_distance': 'trip_miles',
-                                            'fare_amount': 'base_fare'})
+
 # %% 檢查缺失值
 print('-----Uber-----')
 print(uber.info(show_counts=True))
@@ -85,11 +72,8 @@ print('\n-----Lyft-----')
 print(lyft.info(show_counts=True))
 print('\n-----Yellow-----')
 print(yellow.info(show_counts=True))
-print('\n-----Green-----')
-print(green.info(show_counts=True))
 
-# %% 檢查小黃、小綠的日期時間
-# 小黃
+# %% 檢查小黃的日期時間
 # yellow_wrong_time = yellow[yellow['pickup_datetime'].dt.to_period('M') != '2020-11']
 # yellow_wrong_time = yellow_wrong_time.sort_values(by='pickup_datetime').reset_index(drop=True)
 # print(f'Num of yellow wrong pickup datetime: {yellow_wrong_time.shape[0]}')
@@ -98,26 +82,17 @@ print(green.info(show_counts=True))
 # print(f'Num of yellow wrong pickup datetime at 2020-10-31: {yellow_wrong_time_1031.shape[0]}')
 # yellow_wrong_time_1201 = yellow_wrong_time[yellow_wrong_time['pickup_datetime'].dt.to_period('D') == '2020-12-01']
 # print(f'Num of yellow wrong pickup datetime at 2020-12-01: {yellow_wrong_time_1201.shape[0]}')
-# 小黃的112筆中有48筆為10月31日的資料，應可歸於10月的資料，於此月分析先剔除，與所有資料結合時可保留
-# 小黃的112筆中有16筆為12月1日的資料，應可歸於12月的資料，於此月分析先剔除，與所有資料結合時可保留
+# 112筆中有48筆為10月31日的資料，應可歸於10月的資料，於此月分析先剔除，與所有資料結合時可保留
+# 112筆中有16筆為12月1日的資料，應可歸於12月的資料，於此月分析先剔除，與所有資料結合時可保留
 # 其餘48筆日期差距較大，應予刪除
 yellow = yellow[yellow['pickup_datetime'].dt.to_period('M').between('2020-11', '2020-12')]
 # del yellow_wrong_time, yellow_wrong_time_1031, yellow_wrong_time_1201
 
 
-# 小綠
-# green_wrong_time = green[green['pickup_datetime'].dt.to_period('M') != '2020-11']
-# green_wrong_time = green_wrong_time.sort_values(by='pickup_datetime').reset_index(drop=True)
-# print(f'Num of green wrong pickup datetime: {green_wrong_time.shape[0]}')
-# 小綠的2筆分別為前一個月最後一天接近24點，和後一個月最後一天剛過24點，應可歸於10月和12月的資料，於此月分析先剔除，與所有資料結合時可保留
-green = green[green['pickup_datetime'].dt.to_period('M').between('2020-11', '2020-12')]
-# del green_wrong_time
-# %% 計算小黃、小綠的行程時間
+# %% 計算小黃的行程時間
 yellow['trip_time(s)'] = yellow['dropoff_datetime'] - yellow['pickup_datetime']
 yellow['trip_time(s)'] = round(yellow['trip_time(s)'] / np.timedelta64(1, 's'), 0)
 
-green['trip_time(s)'] = green['dropoff_datetime'] - green['pickup_datetime']
-green['trip_time(s)'] = round(green['trip_time(s)'] / np.timedelta64(1, 's'), 0)
 # %% 未知上下車地點
 #%%% 檢查未知上車地點佔整體資料比例
 def check_unknown_pu_zone(dataset):
@@ -137,8 +112,6 @@ check_unknown_pu_zone(lyft)
 print('Yellow num of unknown pickup zone')
 check_unknown_pu_zone(yellow)
 
-print('Green num of unknown pickup zone')
-check_unknown_pu_zone(green)
 
 #%%% 刪除未知上車地點的records
 # 定義刪除用function
@@ -152,7 +125,6 @@ def remove_unknown_pu_zone(dataset):
 uber = remove_unknown_pu_zone(uber)
 lyft = remove_unknown_pu_zone(lyft)
 yellow = remove_unknown_pu_zone(yellow)
-green = remove_unknown_pu_zone(green)
 
 #%%% 檢查未知下車地點佔整體資料比例
 def check_unknown_do_zone(dataset):
@@ -173,8 +145,6 @@ check_unknown_do_zone(lyft)
 print('Yellow num of unknown drop off zone')
 check_unknown_do_zone(yellow)
 
-print('Green num of unknown drop off zone')
-check_unknown_do_zone(green)
 
 #%%% 刪除未知下車地點的records
 # 未知下車地點records較多，但保留沒有意義，刪除
@@ -189,7 +159,7 @@ def remove_unknown_do_zone(dataset):
 uber = remove_unknown_do_zone(uber)
 lyft = remove_unknown_do_zone(lyft)
 yellow = remove_unknown_do_zone(yellow)
-green = remove_unknown_do_zone(green)
+
 
 # %% taxi_zones
 # %%% 讀入taxi_zones
@@ -231,18 +201,17 @@ def merge_with_tz(dataset):
 uber = merge_with_tz(uber)
 lyft = merge_with_tz(lyft)
 yellow = merge_with_tz(yellow)
-green = merge_with_tz(green)
+
 
 # %% 檢查行程時間的極端值
 
-# 雖都佔整體不到1%，但因數量多，不刪除，進行替換
 # 考慮到資料量與極右偏分布，用第1到第3四分位數之間的隨機值替換
 # 缺點1：沒有考慮到大於0但異常短的行程時間
 # 缺點2：狹長型的行政區如曼哈頓可能會多刪一些
 # %%% 定義function
 def outlier_detect(data, col, attr, threshold=3):
     '''
-    data傳入Uber, Lyft, 小黃, 小綠的dataset
+    data傳入Uber, Lyft, 小黃的dataset
     col傳入要處理的column，例如'trip_time(s)'
     attr可傳入：'same', 'diff', 'EWR'
     '''
@@ -282,7 +251,7 @@ def outlier_detect(data, col, attr, threshold=3):
 
 def replace_outlier(data, col, process_data, outlier_index, para):
     '''
-    data傳入Uber, Lyft, 小黃, 小綠的dataset
+    data傳入Uber, Lyft, 小黃的dataset
     col傳入要處理的column，須與傳入outlier_detect()的一致
     process_data, outlier_index, para為呼叫outlier_detect()回傳的結果
     '''
@@ -306,7 +275,7 @@ def replace_outlier(data, col, process_data, outlier_index, para):
 
 # 上下車同行政區
 print('上下車同行政區')
-for df in [uber, lyft, yellow, green]:
+for df in [uber, lyft, yellow]:
     print('------------------------------')
     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'same')
     df.loc[:, :] = replace_outlier(
@@ -315,8 +284,6 @@ for df in [uber, lyft, yellow, green]:
 
 # 上車或下車為EWR
 print('上車或下車為EWR')
-# 小綠無明顯極端值，確認後可不處理
-green[(green['PUborough_id'] == 0) | (green['DOborough_id'] == 0)]['trip_time(s)'].describe()
 for df in [uber, lyft, yellow]:
     print('------------------------------')
     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'EWR')
@@ -326,13 +293,53 @@ for df in [uber, lyft, yellow]:
 
 # 上下車不同行政區
 print('上下車不同行政區')
-for df in [uber, lyft, yellow, green]:
+for df in [uber, lyft, yellow]:
     print('------------------------------')
     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'diff')
     df.loc[:, :] = replace_outlier(
         df, 'trip_time(s)', process_data, index, para)
 
 del process_data, index, para
+
+# %%% 另一種：直接刪除
+def delete_outlier(data, col, attr, threshold=3):
+    '''
+    data傳入Uber, Lyft, 小黃的dataset
+    col傳入要處理的column，須與傳入outlier_detect()的一致
+    process_data, outlier_index, para為呼叫outlier_detect()回傳的結果
+    '''
+    process_data, outlier_index, _ = outlier_detect(data, col, attr, threshold)
+    # 取得極端值的index，並轉為list
+    outlier_index = list(outlier_index[outlier_index == True].index)
+
+    data_copy = data.copy(deep=True)
+    data_copy = data_copy.drop(outlier_index, axis=0)
+
+    return data_copy
+
+
+# 刪除，按「上下車同行政區 --> 上車或下車EWR --> 上下車不同行政區」的順序
+# 上下車同行政區
+print('上下車同行政區')
+uber = delete_outlier(uber, 'trip_time(s)', 'same')
+lyft = delete_outlier(lyft, 'trip_time(s)', 'same')
+yellow = delete_outlier(yellow, 'trip_time(s)', 'same')
+
+
+# 上車或下車為EWR
+print('上車或下車為EWR')
+uber = delete_outlier(uber, 'trip_time(s)', 'EWR')
+lyft = delete_outlier(lyft, 'trip_time(s)', 'EWR')
+yellow = delete_outlier(yellow, 'trip_time(s)', 'EWR')
+
+
+# 上下車不同行政區
+print('上下車不同行政區')
+uber = delete_outlier(uber, 'trip_time(s)', 'diff')
+lyft = delete_outlier(lyft, 'trip_time(s)', 'diff')
+yellow = delete_outlier(yellow, 'trip_time(s)', 'diff')
+
+
 # %%% 繪圖查看插捕後分布
 plt.figure(figsize=(8, 6))
 sns.histplot(uber['trip_time(s)'],
@@ -340,8 +347,7 @@ sns.histplot(uber['trip_time(s)'],
 sns.histplot(lyft['trip_time(s)'], color='red', alpha=0.7, label='Lyft')
 sns.histplot(yellow['trip_time(s)'],
              color='yellow', alpha=0.7, label='Yellow')
-sns.histplot(green['trip_time(s)'],
-             color='green', alpha=0.7, label='Green')
+
 plt.title('Trip time (s) of all datasets', fontdict={'fontsize': 18})
 plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
@@ -359,8 +365,7 @@ plt.show()
 
 datasets = {'uber': 0,
             'lyft': 1,
-            'yellow': 2,
-            'green': 3}
+            'yellow': 2}
 
 for dataset, value in datasets.items():
     globals()[dataset]['service_type'] = value
@@ -368,7 +373,7 @@ for dataset, value in datasets.items():
 del datasets
 
 #%%% 組合
-all_data = pd.concat([uber, lyft, yellow, green])
+all_data = pd.concat([uber, lyft, yellow])
 all_data = all_data.sort_values('pickup_datetime').reset_index(drop=True)
 all_data.shape
 
@@ -436,15 +441,17 @@ all_data['is_day_off'] = np.where(
     (all_data['weekday'].isin([5, 6])), 
     True, False
     )
+print(all_data['is_day_off'].value_counts())
 # %% 按日期時間計算總量
 # %%% 按日期
 p_month_day = all_data.pivot_table(index=['month', 'day'], columns='service_type', aggfunc='size')
+p_month_day_flat = p_month_day.stack().reset_index()
 
 plt.figure(figsize=(8, 6))
-colors = ['gray', 'red', 'goldenrod', 'green']
-labels = ['Uber', 'Lyft', 'Yellow', 'Green']
-for i in range(4):
-    sns.lineplot(data=p_month_day.loc[:, i], 
+colors = ['gray', 'red', 'goldenrod']
+labels = ['Uber', 'Lyft', 'Yellow']
+for i in range(3):
+    sns.lineplot(p_month_day_flat, 
                  color=colors[i], 
                  label=labels[i], 
                  marker='o')
