@@ -426,6 +426,56 @@ for j in sorted(ny_holidays_all.items()):
     print(j)
 
 del i, j
+
+#%%% 測試節日
+# 定義聯邦法定節日，移除非法定節日
+import holidays
+from holidays.countries import US
+
+class FedHolidays(US):
+    def _populate(self, year):
+        super()._populate(year)
+        self.pop_named("Lincoln's Birthday")
+        self.pop_named("Susan B. Anthony Day")
+
+
+# 實例化FedHolidays
+ny_holidays_fed = FedHolidays(subdiv='NY', years=2020)
+# 查看
+print('---Federal New York Holidays---')
+for i in sorted(ny_holidays_fed.items()):
+    print(i)
+print()
+
+
+# 定義所有節日
+# from holidays import country_holidays
+from datetime import date
+import holidays
+us_holidays = holidays.country_holidays('US', subdiv='NY')
+us_holidays.get('2020-06-19')
+us_holidays.update({'06-01': "Milk Day"})
+us_holidays.get('2022-06-19')
+
+
+class AllHolidays(FedHolidays):
+    def _populate(self, year):
+        super()._populate(year)
+        self._add_holiday("Valentine's Day", 2, 14)
+        self._add_holiday("St.Patrick's Day", 3, 17)
+        self._add_holiday("Halloween", 10, 31)
+        self._add_holiday("Christmas Eve", 12, 24)
+        self._add_holiday("New Year's Eve", 12, 31)
+
+
+# 實例化AllHolidays
+ny_holidays_all = AllHolidays(subdiv='NY', years=2020)
+# 查看
+print('---All New York Holidays---')
+for j in sorted(ny_holidays_all.items()):
+    print(j)
+
+del i, j
 # %%% 增加聯邦法定節日標籤
 all_data['is_fed_holiday'] = np.where(all_data['pickup_datetime'].dt.date.isin(ny_holidays_fed), True, False)
 print(all_data['is_fed_holiday'].value_counts())
