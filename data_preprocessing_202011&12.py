@@ -449,13 +449,11 @@ print()
 
 
 # 定義所有節日
-# from holidays import country_holidays
-from datetime import date
-import holidays
-us_holidays = holidays.country_holidays('US', subdiv='NY')
-us_holidays.get('2020-06-19')
-us_holidays.update({'06-01': "Milk Day"})
-us_holidays.get('2022-06-19')
+# 復活節：每年分開自定義，自定義時加入年份，測試這樣是不是隔年就不會是True
+# groupby之後，檢驗聖誕節到元旦之間的非假日與其他星期有沒有差異
+us_holidays = holidays.country_holidays(country='US', subdiv='NY', years=2020)
+for date, name in us_holidays.items():
+    print(f'{name}: {date}')
 
 
 class AllHolidays(FedHolidays):
