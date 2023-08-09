@@ -429,14 +429,17 @@ del i, j
 
 #%%% 測試節日
 # 定義聯邦法定節日，移除非法定節日
+import datetime
 import holidays
 from holidays.countries import US
+
 
 class FedHolidays(US):
     def _populate(self, year):
         super()._populate(year)
         self.pop_named("Lincoln's Birthday")
         self.pop_named("Susan B. Anthony Day")
+        
 
 
 # 實例化FedHolidays
@@ -455,7 +458,7 @@ us_holidays = holidays.country_holidays(country='US', subdiv='NY', years=2020)
 for date, name in us_holidays.items():
     print(f'{name}: {date}')
 
-
+# from holidays.calendars import gregorian
 class AllHolidays(FedHolidays):
     def _populate(self, year):
         super()._populate(year)
@@ -464,10 +467,28 @@ class AllHolidays(FedHolidays):
         self._add_holiday("Halloween", 10, 31)
         self._add_holiday("Christmas Eve", 12, 24)
         self._add_holiday("New Year's Eve", 12, 31)
+        # n為第幾個星期
+        self._add_holiday("Milk Monday", self._get_nth_weekday_of_month(n=3, weekday=3, month=6))
+
+ny_holidays_all = AllHolidays(subdiv='NY', years=[2019])
 
 
 # 實例化AllHolidays
-ny_holidays_all = AllHolidays(subdiv='NY', years=2020)
+ny_holidays_all = AllHolidays(subdiv='NY', years=[2019, 2020, 2021, 2022, 2023])
+
+# 新增復活節、復活節星期一
+ny_holidays_all[datetime.date(2019, 4, 21)] = "Easter"
+ny_holidays_all[datetime.date(2019, 4, 22)] = "Easter Monday"
+ny_holidays_all[datetime.date(2020, 4, 12)] = "Easter"
+ny_holidays_all[datetime.date(2020, 4, 13)] = "Easter Monday"
+ny_holidays_all[datetime.date(2021, 4, 4)] = "Easter"
+ny_holidays_all[datetime.date(2021, 4, 5)] = "Easter Monday"
+ny_holidays_all[datetime.date(2022, 4, 17)] = "Easter"
+ny_holidays_all[datetime.date(2022, 4, 18)] = "Easter Monday"
+ny_holidays_all[datetime.date(2023, 4, 9)] = "Easter"
+ny_holidays_all[datetime.date(2023, 4, 10)] = "Easter Monday"
+
+
 # 查看
 print('---All New York Holidays---')
 for j in sorted(ny_holidays_all.items()):
