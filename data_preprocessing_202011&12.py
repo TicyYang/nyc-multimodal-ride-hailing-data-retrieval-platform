@@ -178,8 +178,7 @@ taxi_zones = taxi_zones.drop(['Zone', 'service_zone'], axis=1)
 
 
 labels = ['EWR', 'Queens', 'Bronx', 'Manhattan', 'Staten Island', 'Brooklyn']
-taxi_zones['borough_id'] = pd.Categorical(
-    taxi_zones['Borough'], categories=labels)
+taxi_zones['borough_id'] = pd.Categorical(taxi_zones['Borough'], categories=labels)
 taxi_zones['borough_id'] = taxi_zones['borough_id'].cat.codes
 taxi_zones = taxi_zones.drop('Borough', axis=1)
 del labels
@@ -483,23 +482,6 @@ p['trip_miles'].sum()  # 25048855
 
 g = all_data[all_data.month == 12].groupby(['day', 'weekday'])['trip_miles'].size()
 
-
-# 
-g = all_data[all_data.month == 12].groupby(['day', 'weekday', 'is_holiday'])['trip_miles'].size()
-
-ax = g.plot(marker='o')
-x_ticks = g.index.get_level_values('day')-1
-ax.set_xticks(x_ticks)
-ax.set_xticklabels(x_ticks+1, rotation=0)
-# ax.set_xlim(1,30)
-ax.set_title('Count of Trips by Day in 12')
-ax.set_xlabel('Day')
-ax.set_ylabel('Count')
-plt.legend()
-plt.show()
-
-
-
 def plot_compare_weekday(weekday):
     '''
     weekay參數傳入weekday對應的數值，星期一為0、星期四為3、星期日為6
@@ -531,6 +513,92 @@ plot_compare_weekday(6)
 plot_compare_weekday(0)
 plot_compare_weekday(1)
 plot_compare_weekday(2)
+
+
+
+p = all_data.pivot_table(index=['month', 'day', 'is_holiday'], 
+                         columns='PULocationID', 
+                         values='trip_miles', 
+                         aggfunc='count',
+                         fill_value=0)
+
+df_p = p.reset_index()
+df_p['day'] = range(len(df_p))
+df_p['is_holiday'] = np.where(df_p['is_holiday'] == True, 1, 0)
+
+from sklearn.model_selection import train_test_split
+X_train = df_p.loc[:49, ['day', 'is_holiday']]
+X_test = df_p.loc[50:, ['day', 'is_holiday']]
+y_train = df_p.loc[:49, 1]
+y_test = df_p.loc[50:, 1]
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#%%% 線性迴歸
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+r_square = model.score(X_test, y_test)
+print(f'R square: {model.score(X_test, y_test)}')
+
+#%%% XGBoost
+from xgboost import XGBRegressor
+model = XGBRegressor(n_estimators=500, 
+                        learning_rate=0.05, 
+                        n_jobs=-1, 
+                        random_state=0)
+
+# early_stopping_rounds代表經過若干輪訓練後，選定的評估指標沒有提升，就停止訓練
+# eval_metric決定評估的指標
+# eval_set設定測試集
+# verbose控制輸出的詳細程度
+model.fit(X_train, y_train, 
+             early_stopping_rounds=5,
+             eval_set=[(X_test, y_test)],
+             verbose=2)
+
+# 預測
+predictions = model.predict(X_test)
+print("Mean Squared Error: " + str(mean_squared_error(predictions, y_test)))
+print(model.score(X_test, y_test))
+
+#%% LightGBM
+from lightgbm import LGBMRegressor
+
+model = LGBMRegressor(n_estimators=500, 
+                        learning_rate=0.1, 
+                        n_jobs=-1, 
+                        random_state=0)
+
+model.fit(X_train, y_train,
+             eval_set=[(X_test, y_test)])
+
+# 預測
+predictions = model.predict(X_test)
+print("Mean Squared Error: " + str(mean_squared_error(predictions, y_test)))
+print(model.score(X_test, y_test))
+
+
+
+g_11_12 = all_data.groupby(['month', 'day', 'PULocationID'])['trip_miles'].sum()
+df = g_11_12.to_frame()
+
+
+a = df.reset_index()
+a['day'] = pd.Categorical(a['day'], ordered=True)
+dummy_a = pd.get_dummies(a.PULocationID)
+a_dummy_a = pd.concat([a, dummy_a], axis=1) 
+
+
+dummy_df = pd.get_dummies(df.index.get_level_values('PULocationID'))
+result_df = pd.concat([df, dummy_df], axis=1)
+
+
 
 
 
