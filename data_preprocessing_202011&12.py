@@ -302,6 +302,38 @@ for df in [uber, lyft, yellow]:
 del process_data, index, para
 
 # %%% 另一種：直接刪除
+# 簡化版的outlier_detect
+def outlier_detect(data, col, attr, threshold=3):
+    '''
+    data傳入Uber, Lyft, 小黃的dataset
+    col傳入要處理的column，例如'trip_time(s)'
+    attr可傳入：'same', 'diff'
+    '''
+    # 上下車地點相同
+    if attr == 'same':
+        process_data = data[data['PUborough_id'] == data['DOborough_id']]
+
+    # 上下車地點不同
+    elif attr == 'diff':
+        process_data = data[data['PUborough_id'] != data['DOborough_id']]
+
+
+    IQR = process_data[col].quantile(0.75) - process_data[col].quantile(0.25)
+    Lower_fence = 0
+    Upper_fence = process_data[col].quantile(0.75) + (IQR * threshold)
+    para = (Upper_fence, Lower_fence)
+    tmp = pd.concat([process_data[col] > Upper_fence,
+                     process_data[col] < Lower_fence], axis=1)
+    outlier_index = tmp.any(axis=1)
+
+    print('Num of outlier detected:', outlier_index.value_counts()[1])
+    print(
+        f'Proportion of outlier detected: {round(outlier_index.value_counts()[1] / len(outlier_index) * 100, 5)}%')
+    print('Upper bound:', para[0])
+    print(process_data['trip_time(s)'].describe())
+    return process_data, outlier_index, para
+
+
 def delete_outlier(data, col, attr, threshold=3):
     '''
     data傳入Uber, Lyft, 小黃的dataset
@@ -326,13 +358,6 @@ lyft = delete_outlier(lyft, 'trip_time(s)', 'same')
 yellow = delete_outlier(yellow, 'trip_time(s)', 'same')
 
 
-# 上車或下車為EWR
-print('上車或下車為EWR')
-uber = delete_outlier(uber, 'trip_time(s)', 'EWR')
-lyft = delete_outlier(lyft, 'trip_time(s)', 'EWR')
-yellow = delete_outlier(yellow, 'trip_time(s)', 'EWR')
-
-
 # 上下車不同行政區
 print('上下車不同行政區')
 uber = delete_outlier(uber, 'trip_time(s)', 'diff')
@@ -343,10 +368,10 @@ yellow = delete_outlier(yellow, 'trip_time(s)', 'diff')
 # %%% 繪圖查看插捕後分布
 plt.figure(figsize=(8, 6))
 sns.histplot(uber['trip_time(s)'],
-             color='gray', alpha=0.7, label='Uber')
+             color='royalblue', alpha=0.7, label='Uber')
 sns.histplot(lyft['trip_time(s)'], color='red', alpha=0.7, label='Lyft')
 sns.histplot(yellow['trip_time(s)'],
-             color='yellow', alpha=0.7, label='Yellow')
+             color='yellow', alpha=0.7, label='goldenrod')
 
 plt.title('Trip time (s) of all datasets', fontdict={'fontsize': 18})
 plt.xticks(fontsize=14)
@@ -387,96 +412,30 @@ all_data = all_data.assign(year=all_data['pickup_datetime'].dt.year,
 
 
 # %% 節日標籤
-# %%% 聯邦法定節日
-# 定義聯邦法定節日，移除非法定節日
-from holidays.countries import US
 
-class FedHolidays(US):
-    def _populate(self, year):
-        super()._populate(year)
-        self.pop_named("Lincoln's Birthday")
-        self.pop_named("Susan B. Anthony Day")
-
-
-# 實例化FedHolidays
-ny_holidays_fed = FedHolidays(subdiv='NY', years=2020)
-# 查看
-print('---Federal New York Holidays---')
-for i in sorted(ny_holidays_fed.items()):
-    print(i)
-print()
-
-
-# 定義所有節日
-class AllHolidays(FedHolidays):
-    def _populate(self, year):
-        super()._populate(year)
-        self._add_holiday("Valentine's Day", 2, 14)
-        self._add_holiday("St.Patrick's Day", 3, 17)
-        self._add_holiday("Halloween", 10, 31)
-        self._add_holiday("Christmas Eve", 12, 24)
-        self._add_holiday("New Year's Eve", 12, 31)
-
-
-# 實例化AllHolidays
-ny_holidays_all = AllHolidays(subdiv='NY', years=2020)
-# 查看
-print('---All New York Holidays---')
-for j in sorted(ny_holidays_all.items()):
-    print(j)
-
-del i, j
-
-#%%% 測試節日
 # 定義聯邦法定節日，移除非法定節日
 import datetime
-import holidays
 from holidays.countries import US
 
 
-class FedHolidays(US):
+# from holidays.calendars import gregorian
+class AllHolidays(US):
     def _populate(self, year):
         super()._populate(year)
         self.pop_named("Lincoln's Birthday")
         self.pop_named("Susan B. Anthony Day")
         
-
-
-# 實例化FedHolidays
-ny_holidays_fed = FedHolidays(subdiv='NY', years=2020)
-# 查看
-print('---Federal New York Holidays---')
-for i in sorted(ny_holidays_fed.items()):
-    print(i)
-print()
-
-
-# 定義所有節日
-# 復活節：每年分開自定義，自定義時加入年份，測試這樣是不是隔年就不會是True
-# groupby之後，檢驗聖誕節到元旦之間的非假日與其他星期有沒有差異
-us_holidays = holidays.country_holidays(country='US', subdiv='NY', years=2020)
-for date, name in us_holidays.items():
-    print(f'{name}: {date}')
-
-# from holidays.calendars import gregorian
-class AllHolidays(FedHolidays):
-    def _populate(self, year):
-        super()._populate(year)
         self._add_holiday("Valentine's Day", 2, 14)
         self._add_holiday("St.Patrick's Day", 3, 17)
         self._add_holiday("Halloween", 10, 31)
         self._add_holiday("Christmas Eve", 12, 24)
         self._add_holiday("New Year's Eve", 12, 31)
-        # n為第幾個星期
-        self._add_holiday("Milk Monday", self._get_nth_weekday_of_month(n=3, weekday=3, month=6))
-
-ny_holidays_all = AllHolidays(subdiv='NY', years=[2019])
 
 
 # 實例化AllHolidays
 ny_holidays_all = AllHolidays(subdiv='NY', years=[2019, 2020, 2021, 2022, 2023])
 
-# 新增復活節、復活節星期一
+# 新增2019~2023年的復活節、復活節星期一
 ny_holidays_all[datetime.date(2019, 4, 21)] = "Easter"
 ny_holidays_all[datetime.date(2019, 4, 22)] = "Easter Monday"
 ny_holidays_all[datetime.date(2020, 4, 12)] = "Easter"
@@ -490,55 +449,96 @@ ny_holidays_all[datetime.date(2023, 4, 10)] = "Easter Monday"
 
 
 # 查看
-print('---All New York Holidays---')
-for j in sorted(ny_holidays_all.items()):
-    print(j)
+for i in sorted(ny_holidays_all.items()):
+    print(i)
 
-del i, j
-# %%% 增加聯邦法定節日標籤
-all_data['is_fed_holiday'] = np.where(all_data['pickup_datetime'].dt.date.isin(ny_holidays_fed), True, False)
-print(all_data['is_fed_holiday'].value_counts())
+del i
 
 # %%% 增加所有節日標籤
 all_data['is_holiday'] = np.where(all_data['pickup_datetime'].dt.date.isin(ny_holidays_all), True, False)
 print(all_data['is_holiday'].value_counts())
 
+all_data['is_holiday'].value_counts()
 # %% 假日標籤
 # 是聯邦法定節日或週六日，就標為假日
-all_data['is_day_off'] = np.where(
-    (all_data['is_fed_holiday']) | 
-    (all_data['weekday'].isin([5, 6])), 
-    True, False
-    )
-print(all_data['is_day_off'].value_counts())
+# all_data['is_day_off'] = np.where(
+#     (all_data['is_fed_holiday']) | 
+#     (all_data['weekday'].isin([5, 6])), 
+#     True, False
+#     )
+
+# print(all_data['is_day_off'].value_counts())
 # %% 按日期時間計算總量
-# %%% 按日期
-p_month_day = all_data.pivot_table(index=['month', 'day'], columns='service_type', aggfunc='size')
-p_month_day_flat = p_month_day.stack().reset_index()
+# 檢驗節日前夕有沒有差異
 
-plt.figure(figsize=(8, 6))
-colors = ['gray', 'red', 'goldenrod']
-labels = ['Uber', 'Lyft', 'Yellow']
-for i in range(3):
-    sns.lineplot(p_month_day_flat, 
-                 color=colors[i], 
-                 label=labels[i], 
-                 marker='o')
+p = all_data.pivot_table(index=['month', 'day', 'is_holiday', 'hour'], 
+                         columns='PULocationID', 
+                         values='trip_miles', 
+                         aggfunc='count',
+                         fill_value=0)
+p['trip_miles'].sum()  # 25048855
 
-plt.title('Num per day', fontdict={'fontsize': 18})
-plt.xticks(p_month_day.index.get_level_values('day'), fontsize=14)
-plt.yticks(fontsize=14)
-plt.xlabel('Day', fontdict={'fontsize': 16})
-plt.ylabel('Num', fontdict={'fontsize': 16})
-plt.legend(fontsize=16)
+# p.loc[(11, 1, 0):(11, 4, 5)]
+
+
+g = all_data[all_data.month == 12].groupby(['day', 'weekday'])['trip_miles'].size()
+
+
+# 
+g = all_data[all_data.month == 12].groupby(['day', 'weekday', 'is_holiday'])['trip_miles'].size()
+
+ax = g.plot(marker='o')
+x_ticks = g.index.get_level_values('day')-1
+ax.set_xticks(x_ticks)
+ax.set_xticklabels(x_ticks+1, rotation=0)
+# ax.set_xlim(1,30)
+ax.set_title('Count of Trips by Day in 12')
+ax.set_xlabel('Day')
+ax.set_ylabel('Count')
+plt.legend()
 plt.show()
 
 
 
-# %%% 按小時
-p_hour = all_data.pivot_table(index='hour', columns='service_type', aggfunc='size')
-p_hour.plot(kind='bar', rot=0, width=1)
-plt.legend(fontsize=16)
+def plot_compare_weekday(weekday):
+    '''
+    weekay參數傳入weekday對應的數值，星期一為0、星期四為3、星期日為6
+    '''    
+    fig, ax = plt.subplots()
+    bars = ax.bar(range(len(g)), g.values, tick_label=g.index)
+    
+    ax.set_title('Count of Trips by Day in December')
+    ax.set_xlabel('Day')
+    ax.set_ylabel('Count')
+    
+    x_ticks = range(len(g))
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels([f'{day[0]} ({day[1]})' for day in g.index], rotation=0)
+    
+    target_weekdays = [weekday]
+    for i, bar in enumerate(bars):
+        if g.index[i][1] in target_weekdays:
+            bar.set_color('red')
+    
+    plt.tight_layout()
+    plt.show()
+
+
+plot_compare_weekday(3)
+plot_compare_weekday(4)
+plot_compare_weekday(5)
+plot_compare_weekday(6)
+plot_compare_weekday(0)
+plot_compare_weekday(1)
+plot_compare_weekday(2)
+
+
+
+
+
+
+p_month_day_hour = all_data.pivot_table(index=['month', 'day', 'hour'], columns='service_type', aggfunc='size')
+
 
 
 # %% 測試
