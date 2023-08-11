@@ -47,7 +47,7 @@ def read_data(data_time_1, data_time_2):
     
     return uber, lyft, yellow
 
-data_time_1, data_time_2 = '2022-09', '2022-10'
+data_time_1, data_time_2 = '2022-11', '2022-12'
 
 uber, lyft, yellow = read_data(data_time_1, data_time_2)
 
@@ -334,7 +334,7 @@ p = all_data.pivot_table(index=['month', 'day', 'is_holiday', 'hour'],
                          fill_value=0)
 
 
-g = all_data[all_data.month == 10].groupby(['day', 'weekday'])['trip_miles'].size()
+g = all_data[all_data.month == 12].groupby(['day', 'weekday'])['trip_miles'].size()
 
 def plot_compare_weekday(weekday):
     '''
