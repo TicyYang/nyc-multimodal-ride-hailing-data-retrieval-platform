@@ -381,11 +381,10 @@ plt.legend(fontsize=16)
 plt.show()
 
 # %% 組合所有Datasets
-#%%% 先標記每一個Dataset的類型
+# 先標記每一個Dataset的類型
 # 0 = Uber
 # 1 = Lyft
 # 2 = Yellow
-# 3 = Green
 
 datasets = {'uber': 0,
             'lyft': 1,
@@ -396,10 +395,11 @@ for dataset, value in datasets.items():
 
 del datasets
 
-#%%% 組合
+# 組合
 all_data = pd.concat([uber, lyft, yellow])
 all_data = all_data.sort_values('pickup_datetime').reset_index(drop=True)
 all_data.shape
+
 
 # %% 分出年、月、日、星期、小時欄位
 
@@ -412,7 +412,7 @@ all_data = all_data.assign(year=all_data['pickup_datetime'].dt.year,
 
 # %% 節日標籤
 
-# 定義聯邦法定節日，移除非法定節日
+# 定義節日，移除非法定節日
 import datetime
 from holidays.countries import US
 
@@ -467,16 +467,19 @@ all_data['is_holiday'].value_counts()
 #     )
 
 # print(all_data['is_day_off'].value_counts())
+
+#%% # 檢驗節日前夕有沒有差異
+
+
+
 # %% 按日期時間計算總量
-# 檢驗節日前夕有沒有差異
+
 
 p = all_data.pivot_table(index=['month', 'day', 'is_holiday', 'hour'], 
                          columns='PULocationID', 
                          values='trip_miles', 
                          aggfunc='count',
                          fill_value=0)
-p['trip_miles'].sum()  # 25048855
-
 # p.loc[(11, 1, 0):(11, 4, 5)]
 
 
@@ -516,30 +519,140 @@ plot_compare_weekday(2)
 
 
 
-p = all_data.pivot_table(index=['month', 'day', 'is_holiday'], 
+p = all_data.pivot_table(index=['month', 'day', 'weekday', 'is_holiday', 'hour'], 
                          columns='PULocationID', 
                          values='trip_miles', 
                          aggfunc='count',
                          fill_value=0)
 
 df_p = p.reset_index()
-df_p['day'] = range(len(df_p))
+df_p['hour'] = range(len(df_p))
 df_p['is_holiday'] = np.where(df_p['is_holiday'] == True, 1, 0)
 
-from sklearn.model_selection import train_test_split
-X_train = df_p.loc[:49, ['day', 'is_holiday']]
-X_test = df_p.loc[50:, ['day', 'is_holiday']]
-y_train = df_p.loc[:49, 1]
-y_test = df_p.loc[50:, 1]
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# X_train = df_p.loc[:49, ['day', 'weekday', 'is_holiday']]
+# X_test = df_p.loc[50:, ['day', 'weekday', 'is_holiday']]
+# y_train = df_p.loc[:49, 1]
+# y_test = df_p.loc[50:, 1]
+
+
+X = df_p.loc[:, ['hour', 'weekday', 'is_holiday']]
+y = df_p[3]
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+
+
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.model_selection import cross_val_score, KFold
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# scaler = StandardScaler()
+# X_train_scaled = scaler.fit_transform(X_train)
+# X_test_scaled = scaler.fit_transform(X_test)
+
+
+models = {'LinearRegression': LinearRegression(),
+          'Decision Tree': DecisionTreeRegressor(),
+          'Random Forest': RandomForestRegressor(),
+          'SVR': SVR(kernel='rbf', C=1)
+          }
+results = []
+
+for model in models.values():
+    kf = KFold(n_splits=6, random_state=42, shuffle=True)
+    cv_results = cross_val_score(model, X_train, y_train, cv=kf)
+    results.append(cv_results)
+
+plt.boxplot(results, labels=models.keys())
+plt.show()
+
 
 #%%% 線性迴歸
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
 
 model = LinearRegression()
 model.fit(X_train, y_train)
+
+X_test = scaler.transform(X_test)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+r_square = model.score(X_test, y_test)
+print(f'R square: {model.score(X_test, y_test)}')
+
+#%% 決策樹
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+
+model = DecisionTreeRegressor()
+model.fit(X_train, y_train)
+
+X_test = scaler.transform(X_test)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+r_square = model.score(X_test, y_test)
+print(f'R square: {model.score(X_test, y_test)}')
+
+
+#%% 隨機森林
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+
+model = RandomForestRegressor()
+model.fit(X_train, y_train)
+
+X_test = scaler.transform(X_test)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+r_square = model.score(X_test, y_test)
+print(f'R square: {model.score(X_test, y_test)}')
+
+#%% SVR
+from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+
+model = SVR(kernel='rbf', C=1)
+model.fit(X_train, y_train)
+
+X_test = scaler.transform(X_test)
 y_pred = model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 print(f"Mean Squared Error: {mse}")
@@ -548,43 +661,52 @@ print(f'R square: {model.score(X_test, y_test)}')
 
 #%%% XGBoost
 from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+
 model = XGBRegressor(n_estimators=500, 
-                        learning_rate=0.05, 
-                        n_jobs=-1, 
-                        random_state=0)
+                     learning_rate=0.05, 
+                     n_jobs=-1, 
+                     random_state=0)
 
-# early_stopping_rounds代表經過若干輪訓練後，選定的評估指標沒有提升，就停止訓練
-# eval_metric決定評估的指標
-# eval_set設定測試集
-# verbose控制輸出的詳細程度
-model.fit(X_train, y_train, 
-             early_stopping_rounds=5,
-             eval_set=[(X_test, y_test)],
-             verbose=2)
+model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=2)
 
-# 預測
-predictions = model.predict(X_test)
-print("Mean Squared Error: " + str(mean_squared_error(predictions, y_test)))
-print(model.score(X_test, y_test))
+X_test = scaler.transform(X_test)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+r_square = model.score(X_test, y_test)
+print(f'R square: {model.score(X_test, y_test)}')
 
 #%% LightGBM
 from lightgbm import LGBMRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
 
 model = LGBMRegressor(n_estimators=500, 
                         learning_rate=0.1, 
                         n_jobs=-1, 
                         random_state=0)
 
-model.fit(X_train, y_train,
-             eval_set=[(X_test, y_test)])
+model.fit(X_train, y_train, eval_set=[(X_test, y_test)])
 
-# 預測
-predictions = model.predict(X_test)
-print("Mean Squared Error: " + str(mean_squared_error(predictions, y_test)))
-print(model.score(X_test, y_test))
+X_test = scaler.transform(X_test)
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+r_square = model.score(X_test, y_test)
+print(f'R square: {model.score(X_test, y_test)}')
 
 
-
+#%% 
 g_11_12 = all_data.groupby(['month', 'day', 'PULocationID'])['trip_miles'].sum()
 df = g_11_12.to_frame()
 
