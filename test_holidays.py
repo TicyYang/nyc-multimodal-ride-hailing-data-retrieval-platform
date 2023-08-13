@@ -233,20 +233,20 @@ yellow = delete_outlier(yellow, 'trip_time(s)', 'diff')
 
 
 # %%% 繪圖查看插捕後分布
-plt.figure(figsize=(8, 6))
-sns.histplot(uber['trip_time(s)'],
-             color='royalblue', alpha=0.7, label='Uber')
-sns.histplot(lyft['trip_time(s)'], color='red', alpha=0.7, label='Lyft')
-sns.histplot(yellow['trip_time(s)'],
-             color='yellow', alpha=0.7, label='goldenrod')
+# plt.figure(figsize=(8, 6))
+# sns.histplot(uber['trip_time(s)'],
+#              color='royalblue', alpha=0.7, label='Uber')
+# sns.histplot(lyft['trip_time(s)'], color='red', alpha=0.7, label='Lyft')
+# sns.histplot(yellow['trip_time(s)'],
+#              color='goldenrod', alpha=0.7, label='Yellow')
 
-plt.title('Trip time (s) of all datasets', fontdict={'fontsize': 18})
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
-plt.xlabel('Trip time (s)', fontdict={'fontsize': 16})
-plt.ylabel('Num of records', fontdict={'fontsize': 16})
-plt.legend(fontsize=16)
-plt.show()
+# plt.title('Trip time (s) of all datasets', fontdict={'fontsize': 18})
+# plt.xticks(fontsize=14)
+# plt.yticks(fontsize=14)
+# plt.xlabel('Trip time (s)', fontdict={'fontsize': 16})
+# plt.ylabel('Num of records', fontdict={'fontsize': 16})
+# plt.legend(fontsize=16)
+# plt.show()
 
 # %% 組合所有Datasets
 # 0 = Uber
