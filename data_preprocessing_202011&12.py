@@ -17,16 +17,6 @@ yellow_202012 = pd.read_parquet('../yellow_tripdata_2020-12.parquet', engine='py
 yellow = pd.concat([yellow_202011, yellow_202012]).sort_values('tpep_pickup_datetime').reset_index(drop=True)
 
 
-# yellow_wrong_time = yellow_202012[yellow_202012['tpep_pickup_datetime'].dt.to_period('M') != '2020-12']
-# yellow_wrong_time = yellow_wrong_time.sort_values(by='tpep_pickup_datetime').reset_index(drop=True)
-# print(f'Num of yellow wrong pickup datetime: {yellow_wrong_time.shape[0]}')
-
-# yellow_wrong_time_1130 = yellow_wrong_time[yellow_wrong_time['tpep_pickup_datetime'].dt.to_period('D') == '2020-11-30']
-# print(f'Num of yellow wrong pickup datetime at 2020-11-30: {yellow_wrong_time_1130.shape[0]}')
-# yellow_wrong_time_0101 = yellow_wrong_time[yellow_wrong_time['tpep_pickup_datetime'].dt.to_period('D') == '2021-01-01']
-# print(f'Num of yellow wrong pickup datetime at 2021-01-01: {yellow_wrong_time_0101.shape[0]}')
-
-
 
 del fhvhv_202011, fhvhv_202012, fhvhv, yellow_202011, yellow_202012
 # %% 查看各Dataset紀錄數
@@ -66,27 +56,15 @@ yellow = yellow.rename(columns={'tpep_pickup_datetime': 'pickup_datetime',
                                               'fare_amount': 'base_fare'})
 
 # %% 檢查缺失值
-print('-----Uber-----')
-print(uber.info(show_counts=True))
-print('\n-----Lyft-----')
-print(lyft.info(show_counts=True))
-print('\n-----Yellow-----')
-print(yellow.info(show_counts=True))
+# print('-----Uber-----')
+# print(uber.info(show_counts=True))
+# print('\n-----Lyft-----')
+# print(lyft.info(show_counts=True))
+# print('\n-----Yellow-----')
+# print(yellow.info(show_counts=True))
 
 # %% 檢查小黃的日期時間
-# yellow_wrong_time = yellow[yellow['pickup_datetime'].dt.to_period('M') != '2020-11']
-# yellow_wrong_time = yellow_wrong_time.sort_values(by='pickup_datetime').reset_index(drop=True)
-# print(f'Num of yellow wrong pickup datetime: {yellow_wrong_time.shape[0]}')
-
-# yellow_wrong_time_1031 = yellow_wrong_time[yellow_wrong_time['pickup_datetime'].dt.to_period('D') == '2020-10-31']
-# print(f'Num of yellow wrong pickup datetime at 2020-10-31: {yellow_wrong_time_1031.shape[0]}')
-# yellow_wrong_time_1201 = yellow_wrong_time[yellow_wrong_time['pickup_datetime'].dt.to_period('D') == '2020-12-01']
-# print(f'Num of yellow wrong pickup datetime at 2020-12-01: {yellow_wrong_time_1201.shape[0]}')
-# 112筆中有48筆為10月31日的資料，應可歸於10月的資料，於此月分析先剔除，與所有資料結合時可保留
-# 112筆中有16筆為12月1日的資料，應可歸於12月的資料，於此月分析先剔除，與所有資料結合時可保留
-# 其餘48筆日期差距較大，應予刪除
 yellow = yellow[yellow['pickup_datetime'].dt.to_period('M').between('2020-11', '2020-12')]
-# del yellow_wrong_time, yellow_wrong_time_1031, yellow_wrong_time_1201
 
 
 # %% 計算小黃的行程時間
@@ -147,7 +125,6 @@ check_unknown_do_zone(yellow)
 
 
 #%%% 刪除未知下車地點的records
-# 未知下車地點records較多，但保留沒有意義，刪除
 # 定義刪除用function
 def remove_unknown_do_zone(dataset):
     '''用function "check_unknown_do_zone"的回傳值，也就是包含未知下車地點的紀錄，作為參數'''
@@ -207,98 +184,98 @@ yellow = merge_with_tz(yellow)
 # 考慮到資料量與極右偏分布，用第1到第3四分位數之間的隨機值替換
 # 缺點1：沒有考慮到大於0但異常短的行程時間
 # 缺點2：狹長型的行政區如曼哈頓可能會多刪一些
-# %%% 定義function
-def outlier_detect(data, col, attr, threshold=3):
-    '''
-    data傳入Uber, Lyft, 小黃的dataset
-    col傳入要處理的column，例如'trip_time(s)'
-    attr可傳入：'same', 'diff', 'EWR'
-    '''
-    # 上下車地點相同，且皆非0 (EWR)的records，IQR倍數設為3
-    if attr == 'same':
-        process_data = data[(data['PUborough_id'] == data['DOborough_id']) &
-                            (data['PUborough_id'] != 0) &
-                            (data['DOborough_id'] != 0)]
+# 定義function
+# def outlier_detect(data, col, attr, threshold=3):
+#     '''
+#     data傳入Uber, Lyft, 小黃的dataset
+#     col傳入要處理的column，例如'trip_time(s)'
+#     attr可傳入：'same', 'diff', 'EWR'
+#     '''
+#     # 上下車地點相同，且皆非0 (EWR)的records，IQR倍數設為3
+#     if attr == 'same':
+#         process_data = data[(data['PUborough_id'] == data['DOborough_id']) &
+#                             (data['PUborough_id'] != 0) &
+#                             (data['DOborough_id'] != 0)]
 
-    # 上下車地點不同，且皆非0 (EWR)的records，IQR倍數設為3
-    elif attr == 'diff':
-        process_data = data[(data['PUborough_id'] != data['DOborough_id']) &
-                            (data['PUborough_id'] != 0) &
-                            (data['DOborough_id'] != 0)]
+#     # 上下車地點不同，且皆非0 (EWR)的records，IQR倍數設為3
+#     elif attr == 'diff':
+#         process_data = data[(data['PUborough_id'] != data['DOborough_id']) &
+#                             (data['PUborough_id'] != 0) &
+#                             (data['DOborough_id'] != 0)]
 
-    # 上下車地點其中一個為0 (EWR)的records，IQR倍數設為5 (因EWR距離其他地區較遠)
-    elif attr == 'EWR':
-        process_data = data[(data['PUborough_id'] == 0) |
-                            (data['DOborough_id'] == 0)]
-        threshold = 5
+#     # 上下車地點其中一個為0 (EWR)的records，IQR倍數設為5 (因EWR距離其他地區較遠)
+#     elif attr == 'EWR':
+#         process_data = data[(data['PUborough_id'] == 0) |
+#                             (data['DOborough_id'] == 0)]
+#         threshold = 5
 
-    IQR = process_data[col].quantile(0.75) - process_data[col].quantile(0.25)
-    Lower_fence = 0
-    Upper_fence = process_data[col].quantile(0.75) + (IQR * threshold)
-    para = (Upper_fence, Lower_fence)
-    tmp = pd.concat([process_data[col] > Upper_fence,
-                     process_data[col] < Lower_fence], axis=1)
-    outlier_index = tmp.any(axis=1)
+#     IQR = process_data[col].quantile(0.75) - process_data[col].quantile(0.25)
+#     Lower_fence = 0
+#     Upper_fence = process_data[col].quantile(0.75) + (IQR * threshold)
+#     para = (Upper_fence, Lower_fence)
+#     tmp = pd.concat([process_data[col] > Upper_fence,
+#                      process_data[col] < Lower_fence], axis=1)
+#     outlier_index = tmp.any(axis=1)
 
-    print('Num of outlier detected:', outlier_index.value_counts()[1])
-    print(
-        f'Proportion of outlier detected: {round(outlier_index.value_counts()[1] / len(outlier_index) * 100, 5)}%')
-    print('Upper bound:', para[0])
-    print(process_data['trip_time(s)'].describe())
-    return process_data, outlier_index, para
-
-
-def replace_outlier(data, col, process_data, outlier_index, para):
-    '''
-    data傳入Uber, Lyft, 小黃的dataset
-    col傳入要處理的column，須與傳入outlier_detect()的一致
-    process_data, outlier_index, para為呼叫outlier_detect()回傳的結果
-    '''
-    # 取得極端值的index，並轉為list
-    outlier_index = list(outlier_index[outlier_index == True].index)
-
-    data_copy = data.copy(deep=True)
-
-    # 產生隨機值，範圍在第1到第3四分位數之間，長度與須插捕的數量相同
-    random_values = np.random.uniform(process_data[col].quantile(0.25),
-                                      process_data[col].quantile(0.75),
-                                      len(outlier_index))
-    # 將極端值替換為對應位置的隨機值
-    for i, j in enumerate(outlier_index):
-        data_copy.loc[j, col] = random_values[i]
-
-    return data_copy
+#     print('Num of outlier detected:', outlier_index.value_counts()[1])
+#     print(
+#         f'Proportion of outlier detected: {round(outlier_index.value_counts()[1] / len(outlier_index) * 100, 5)}%')
+#     print('Upper bound:', para[0])
+#     print(process_data['trip_time(s)'].describe())
+#     return process_data, outlier_index, para
 
 
-# %%% 按「上下車同行政區 --> 上車或下車EWR --> 上下車不同行政區」的順序處理
+# def replace_outlier(data, col, process_data, outlier_index, para):
+#     '''
+#     data傳入Uber, Lyft, 小黃的dataset
+#     col傳入要處理的column，須與傳入outlier_detect()的一致
+#     process_data, outlier_index, para為呼叫outlier_detect()回傳的結果
+#     '''
+#     # 取得極端值的index，並轉為list
+#     outlier_index = list(outlier_index[outlier_index == True].index)
 
-# 上下車同行政區
-print('上下車同行政區')
-for df in [uber, lyft, yellow]:
-    print('------------------------------')
-    process_data, index, para = outlier_detect(df, 'trip_time(s)', 'same')
-    df.loc[:, :] = replace_outlier(
-        df, 'trip_time(s)', process_data, index, para)
+#     data_copy = data.copy(deep=True)
+
+#     # 產生隨機值，範圍在第1到第3四分位數之間，長度與須插捕的數量相同
+#     random_values = np.random.uniform(process_data[col].quantile(0.25),
+#                                       process_data[col].quantile(0.75),
+#                                       len(outlier_index))
+#     # 將極端值替換為對應位置的隨機值
+#     for i, j in enumerate(outlier_index):
+#         data_copy.loc[j, col] = random_values[i]
+
+#     return data_copy
 
 
-# 上車或下車為EWR
-print('上車或下車為EWR')
-for df in [uber, lyft, yellow]:
-    print('------------------------------')
-    process_data, index, para = outlier_detect(df, 'trip_time(s)', 'EWR')
-    df.loc[:, :] = replace_outlier(
-        df, 'trip_time(s)', process_data, index, para)
+# # %%% 按「上下車同行政區 --> 上車或下車EWR --> 上下車不同行政區」的順序處理
+
+# # 上下車同行政區
+# print('上下車同行政區')
+# for df in [uber, lyft, yellow]:
+#     print('------------------------------')
+#     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'same')
+#     df.loc[:, :] = replace_outlier(
+#         df, 'trip_time(s)', process_data, index, para)
 
 
-# 上下車不同行政區
-print('上下車不同行政區')
-for df in [uber, lyft, yellow]:
-    print('------------------------------')
-    process_data, index, para = outlier_detect(df, 'trip_time(s)', 'diff')
-    df.loc[:, :] = replace_outlier(
-        df, 'trip_time(s)', process_data, index, para)
+# # 上車或下車為EWR
+# print('上車或下車為EWR')
+# for df in [uber, lyft, yellow]:
+#     print('------------------------------')
+#     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'EWR')
+#     df.loc[:, :] = replace_outlier(
+#         df, 'trip_time(s)', process_data, index, para)
 
-del process_data, index, para
+
+# # 上下車不同行政區
+# print('上下車不同行政區')
+# for df in [uber, lyft, yellow]:
+#     print('------------------------------')
+#     process_data, index, para = outlier_detect(df, 'trip_time(s)', 'diff')
+#     df.loc[:, :] = replace_outlier(
+#         df, 'trip_time(s)', process_data, index, para)
+
+# del process_data, index, para
 
 # %%% 另一種：直接刪除
 # 簡化版的outlier_detect
@@ -365,20 +342,20 @@ yellow = delete_outlier(yellow, 'trip_time(s)', 'diff')
 
 
 # %%% 繪圖查看插捕後分布
-plt.figure(figsize=(8, 6))
-sns.histplot(uber['trip_time(s)'],
-             color='royalblue', alpha=0.7, label='Uber')
-sns.histplot(lyft['trip_time(s)'], color='red', alpha=0.7, label='Lyft')
-sns.histplot(yellow['trip_time(s)'],
-             color='yellow', alpha=0.7, label='goldenrod')
+# plt.figure(figsize=(8, 6))
+# sns.histplot(uber['trip_time(s)'],
+#              color='royalblue', alpha=0.7, label='Uber')
+# sns.histplot(lyft['trip_time(s)'], color='red', alpha=0.7, label='Lyft')
+# sns.histplot(yellow['trip_time(s)'],
+#              color='yellow', alpha=0.7, label='goldenrod')
 
-plt.title('Trip time (s) of all datasets', fontdict={'fontsize': 18})
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
-plt.xlabel('Trip time (s)', fontdict={'fontsize': 16})
-plt.ylabel('Num of records', fontdict={'fontsize': 16})
-plt.legend(fontsize=16)
-plt.show()
+# plt.title('Trip time (s) of all datasets', fontdict={'fontsize': 18})
+# plt.xticks(fontsize=14)
+# plt.yticks(fontsize=14)
+# plt.xlabel('Trip time (s)', fontdict={'fontsize': 16})
+# plt.ylabel('Num of records', fontdict={'fontsize': 16})
+# plt.legend(fontsize=16)
+# plt.show()
 
 # %% 組合所有Datasets
 # 先標記每一個Dataset的類型
@@ -427,7 +404,21 @@ class AllHolidays(US):
         self._add_holiday("Valentine's Day", 2, 14)
         self._add_holiday("St.Patrick's Day", 3, 17)
         self._add_holiday("Halloween", 10, 31)
+        
+        self._add_holiday("Thanksgiving weekend", 
+                          self._get_nth_weekday_of_month(n=4, weekday=4, month=11))
+        self._add_holiday("Thanksgiving weekend", 
+                          self._get_nth_weekday_of_month(n=4, weekday=5, month=11))
+        self._add_holiday("Thanksgiving weekend", 
+                          self._get_nth_weekday_of_month(n=4, weekday=6, month=11))
+        
         self._add_holiday("Christmas Eve", 12, 24)
+        self._add_holiday("Christmas season", 12, 26)
+        self._add_holiday("Christmas season", 12, 27)
+        self._add_holiday("Christmas season", 12, 28)
+        self._add_holiday("Christmas season", 12, 29)
+        self._add_holiday("Christmas season", 12, 30)
+        
         self._add_holiday("New Year's Eve", 12, 31)
 
 
@@ -468,56 +459,18 @@ all_data['is_holiday'].value_counts()
 
 # print(all_data['is_day_off'].value_counts())
 
-#%% # 檢驗節日前夕有沒有差異
 
-
-
-# %% 按日期時間計算總量
-
-
-p = all_data.pivot_table(index=['month', 'day', 'is_holiday', 'hour'], 
-                         columns='PULocationID', 
-                         values='trip_miles', 
-                         aggfunc='count',
-                         fill_value=0)
-# p.loc[(11, 1, 0):(11, 4, 5)]
-
-
-g = all_data[all_data.month == 12].groupby(['day', 'weekday'])['trip_miles'].size()
-
-def plot_compare_weekday(weekday):
-    '''
-    weekay參數傳入weekday對應的數值，星期一為0、星期四為3、星期日為6
-    '''    
-    fig, ax = plt.subplots()
-    bars = ax.bar(range(len(g)), g.values, tick_label=g.index)
-    
-    ax.set_title('Count of Trips by Day in December')
-    ax.set_xlabel('Day')
-    ax.set_ylabel('Count')
-    
-    x_ticks = range(len(g))
-    ax.set_xticks(x_ticks)
-    ax.set_xticklabels([f'{day[0]} ({day[1]})' for day in g.index], rotation=0)
-    
-    target_weekdays = [weekday]
-    for i, bar in enumerate(bars):
-        if g.index[i][1] in target_weekdays:
-            bar.set_color('red')
-    
-    plt.tight_layout()
-    plt.show()
-
-
-plot_compare_weekday(3)
-plot_compare_weekday(4)
-plot_compare_weekday(5)
-plot_compare_weekday(6)
-plot_compare_weekday(0)
-plot_compare_weekday(1)
-plot_compare_weekday(2)
-
-
+# %% pivot_table
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 p = all_data.pivot_table(index=['month', 'day', 'weekday', 'is_holiday', 'hour'], 
                          columns='PULocationID', 
@@ -525,51 +478,108 @@ p = all_data.pivot_table(index=['month', 'day', 'weekday', 'is_holiday', 'hour']
                          aggfunc='count',
                          fill_value=0)
 
-df_p = p.reset_index()
+df_p = p.reset_index().drop(['month', 'day'], axis=1)
 df_p['hour'] = range(len(df_p))
 df_p['is_holiday'] = np.where(df_p['is_holiday'] == True, 1, 0)
 
-
-# X_train = df_p.loc[:49, ['day', 'weekday', 'is_holiday']]
-# X_test = df_p.loc[50:, ['day', 'weekday', 'is_holiday']]
-# y_train = df_p.loc[:49, 1]
-# y_test = df_p.loc[50:, 1]
-
-
-X = df_p.loc[:, ['hour', 'weekday', 'is_holiday']]
+X = df_p.iloc[:, :3]
 y = df_p[3]
-
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 
 
+# LinearRegression()和SVR()R平方太低，先排除
+
+models = {'Decision Tree': DecisionTreeRegressor(n_jobs=-1),
+          'Random Forest': RandomForestRegressor(n_jobs=-1),
+          'XGBoost': XGBRegressor(n_estimators=1000, 
+                                  learning_rate=0.05, 
+                                  n_jobs=-1, 
+                                  random_state=0),
+          'LightGBM': LGBMRegressor(n_estimators=1000, 
+                                    learning_rate=0.05, 
+                                    n_jobs=-1, 
+                                    random_state=0)
+          }
 
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+results = []
+for model in models:
+    kf = KFold(n_splits=6, random_state=42, shuffle=True)
+    cv_results = cross_val_score(model, X_train, y_train, cv=kf)
+    results.append(cv_results)
+
+plt.boxplot(results, labels=models.keys())
+plt.show()
+
+
+
+
+# 網格搜索RandomForestRegressor最佳參數
+# min_samples_split=2, n_estimators=150
+from sklearn.model_selection import GridSearchCV
+
+kf = KFold(n_splits=6, shuffle=True, random_state=42)
+param_grid = {'n_estimators': np.arange(150, 160, 1),
+              'max_depth': np.arange(8, 10, 1),
+              'min_samples_split': np.arange(2, 4, 1)}
+
+model = RandomForestRegressor()
+model_cv = GridSearchCV(model, param_grid, cv=kf)
+model_cv.fit(X_train, y_train)
+
+# 查看表現最好的超參數和平均交叉驗證分數
+print(model_cv.best_params_, model_cv.best_score_)
+
+
+# %% groupby
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
 from sklearn.model_selection import cross_val_score, KFold
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
+
+g = all_data.groupby([all_data['pickup_datetime'].dt.date,'PULocationID']).size()
+
+# 轉成dataframe
+df_g = g.reset_index(name='count')
+
+df_g['pickup_datetime'] = pd.to_datetime(df_g['pickup_datetime'])
+df_g['days_since_start'] = (df_g['pickup_datetime'] - df_g['pickup_datetime'].min()).dt.days
+
+# 將區域使用 one-hot 編碼
+df_g = pd.get_dummies(df_g, columns=['PULocationID'])
+
+#### 資料分為訓練和測試集
+X = df_g.drop(['pickup_datetime', 'count'], axis=1)
+y = df_g['count']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-# scaler = StandardScaler()
-# X_train_scaled = scaler.fit_transform(X_train)
-# X_test_scaled = scaler.fit_transform(X_test)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
 
 
 models = {'LinearRegression': LinearRegression(),
           'Decision Tree': DecisionTreeRegressor(),
           'Random Forest': RandomForestRegressor(),
-          'SVR': SVR(kernel='rbf', C=1)
+          'SVR': SVR(kernel='rbf', C=1),
+          'XGBoost': XGBRegressor(n_estimators=500, 
+                                  learning_rate=0.05, 
+                                  n_jobs=-1, 
+                                  random_state=0),
+          'LightGBM': LGBMRegressor(n_estimators=500, 
+                                    learning_rate=0.1, 
+                                    n_jobs=-1, 
+                                    random_state=0)
           }
+
 results = []
 
 for model in models.values():
@@ -581,83 +591,42 @@ plt.boxplot(results, labels=models.keys())
 plt.show()
 
 
-#%%% 線性迴歸
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+# %% NN
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import LeakyReLU
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
+n_cols = X_train.shape[1]
 
-model = LinearRegression()
-model.fit(X_train, y_train)
+model = Sequential([
+    Dense(20, input_shape=(n_cols,)),
+    BatchNormalization(),
+    LeakyReLU(),
+    Dense(20, input_shape=(n_cols,)),
+    BatchNormalization(),
+    LeakyReLU(),
+    Dense(1)
+])
 
-X_test = scaler.transform(X_test)
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error: {mse}")
-r_square = model.score(X_test, y_test)
-print(f'R square: {model.score(X_test, y_test)}')
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+model.summary()
 
-#%% 決策樹
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-
-model = DecisionTreeRegressor()
-model.fit(X_train, y_train)
-
-X_test = scaler.transform(X_test)
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error: {mse}")
-r_square = model.score(X_test, y_test)
-print(f'R square: {model.score(X_test, y_test)}')
+# 擬合X, y
+history = model.fit(X_train, y_train, validation_split=0.3, batch_size=10, epochs=20, verbose=2)
 
 
-#%% 隨機森林
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.legend(['training', 'validation'], loc='upper left')
+plt.show()
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
 
-model = RandomForestRegressor()
-model.fit(X_train, y_train)
+X_test = scaler.fit_transform(X_test)
+result = model.evaluate(X_test, y_test)
+print(result)
 
-X_test = scaler.transform(X_test)
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error: {mse}")
-r_square = model.score(X_test, y_test)
-print(f'R square: {model.score(X_test, y_test)}')
-
-#%% SVR
-from sklearn.svm import SVR
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-
-model = SVR(kernel='rbf', C=1)
-model.fit(X_train, y_train)
-
-X_test = scaler.transform(X_test)
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error: {mse}")
-r_square = model.score(X_test, y_test)
-print(f'R square: {model.score(X_test, y_test)}')
 
 #%%% XGBoost
 from xgboost import XGBRegressor
@@ -704,31 +673,6 @@ mse = mean_squared_error(y_test, y_pred)
 print(f"Mean Squared Error: {mse}")
 r_square = model.score(X_test, y_test)
 print(f'R square: {model.score(X_test, y_test)}')
-
-
-#%% 
-g_11_12 = all_data.groupby(['month', 'day', 'PULocationID'])['trip_miles'].sum()
-df = g_11_12.to_frame()
-
-
-a = df.reset_index()
-a['day'] = pd.Categorical(a['day'], ordered=True)
-dummy_a = pd.get_dummies(a.PULocationID)
-a_dummy_a = pd.concat([a, dummy_a], axis=1) 
-
-
-dummy_df = pd.get_dummies(df.index.get_level_values('PULocationID'))
-result_df = pd.concat([df, dummy_df], axis=1)
-
-
-
-
-
-
-
-
-p_month_day_hour = all_data.pivot_table(index=['month', 'day', 'hour'], columns='service_type', aggfunc='size')
-
 
 
 # %% 測試
