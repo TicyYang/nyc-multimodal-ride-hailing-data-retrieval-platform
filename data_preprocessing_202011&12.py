@@ -394,7 +394,6 @@ import datetime
 from holidays.countries import US
 
 
-# from holidays.calendars import gregorian
 class AllHolidays(US):
     def _populate(self, year):
         super()._populate(year)
