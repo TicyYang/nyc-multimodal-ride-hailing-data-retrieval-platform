@@ -406,11 +406,11 @@ class AllHolidays(US):
         self._add_holiday("Halloween", 10, 31)
         
         self._add_holiday("Thanksgiving weekend", 
-                          self._get_nth_weekday_of_month(n=4, weekday=4, month=11))
+                          self._get_nth_weekday_of_month(month=11, n=4, weekday=4))
         self._add_holiday("Thanksgiving weekend", 
-                          self._get_nth_weekday_of_month(n=4, weekday=5, month=11))
+                          self._get_nth_weekday_of_month(month=11, n=4, weekday=5))
         self._add_holiday("Thanksgiving weekend", 
-                          self._get_nth_weekday_of_month(n=4, weekday=6, month=11))
+                          self._get_nth_weekday_of_month(month=11, n=4, weekday=6))
         
         self._add_holiday("Christmas Eve", 12, 24)
         self._add_holiday("Christmas season", 12, 26)
@@ -492,21 +492,17 @@ X_train = scaler.fit_transform(X_train)
 
 # LinearRegression()和SVR()R平方太低，先排除
 
-models = {'Decision Tree': DecisionTreeRegressor(n_jobs=-1),
+models = {'Decision Tree': DecisionTreeRegressor(),
           'Random Forest': RandomForestRegressor(n_jobs=-1),
-          'XGBoost': XGBRegressor(n_estimators=1000, 
-                                  learning_rate=0.05, 
+          'XGBoost': XGBRegressor(n_estimators=400, 
+                                  learning_rate=0.1, 
                                   n_jobs=-1, 
                                   random_state=0),
-          'LightGBM': LGBMRegressor(n_estimators=1000, 
-                                    learning_rate=0.05, 
-                                    n_jobs=-1, 
-                                    random_state=0)
           }
 
 
 results = []
-for model in models:
+for model in models.values():
     kf = KFold(n_splits=6, random_state=42, shuffle=True)
     cv_results = cross_val_score(model, X_train, y_train, cv=kf)
     results.append(cv_results)
@@ -518,15 +514,17 @@ plt.show()
 
 
 # 網格搜索RandomForestRegressor最佳參數
-# min_samples_split=2, n_estimators=150
+# RandomForestRegressor(): min_samples_split=2, n_estimators=150
+# XGBRegressor: n_estimators=400, learning_rate=0.1, n_jobs=-1, random_state=0)
 from sklearn.model_selection import GridSearchCV
 
 kf = KFold(n_splits=6, shuffle=True, random_state=42)
-param_grid = {'n_estimators': np.arange(150, 160, 1),
-              'max_depth': np.arange(8, 10, 1),
-              'min_samples_split': np.arange(2, 4, 1)}
+param_grid = {'n_estimators': np.arange(400, 500, 10),
+              'learning_rate': np.array([0.1]),
+              'n_jobs': np.array([-1]),
+              'random_state': np.array([0])}
 
-model = RandomForestRegressor()
+model = XGBRegressor()
 model_cv = GridSearchCV(model, param_grid, cv=kf)
 model_cv.fit(X_train, y_train)
 
