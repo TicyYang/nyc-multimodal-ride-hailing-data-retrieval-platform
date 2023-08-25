@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet Map Example</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div id="map" style="width: 800px; height: 600px;"></div>
+
+<script>
+var map = L.map('map').setView([0, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+}).addTo(map);
+
+// 載入 GeoJSON 檔案
+var geojsonUrl = 'NYC Taxi Zones.geojson';
+fetch(geojsonUrl)
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      style: function(feature) {
+        // 根據欄位的值來設定顏色的深淺
+        var value = feature.properties.location_id; // 假設欄位名稱是 "value"
+        return {
+          fillColor: getColor(value),
+          fillOpacity: 0.7,
+          color: 'black',
+          weight: 1
+        };
+      },
+      onEachFeature: function(feature, layer) {
+        // 在點擊區域時顯示欄位的值
+        layer.on('click', function(e) {
+          var value = feature.properties.location_id; // 假設欄位名稱是 "value"
+          layer.bindPopup("Value: " + value).openPopup();
+        });
+      }
+    }).addTo(map);
+  });
+
+// 定義根據值返回不同顏色的函數
+function getColor(value) {
+  // 這裡可以定義根據您的需求來設定顏色映射
+  // 例如，根據值的大小返回不同的顏色
+  return value > 50 ? 'red' :
+         value > 30 ? 'yellow' :
+         'green';
+}
+
+</script>
+
+</body>
+</html>
