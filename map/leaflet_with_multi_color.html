@@ -5,13 +5,13 @@
   <title>Leaflet Map Example</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
 
-  <div id="map" style="width: 1500px; height: 1000px;"></div>
+  <div id="map" style="width: 1000px; height: 600px;"></div>
 
   <script>
     var map = L.map('map').setView([40.73439145, -73.95051598], 10);
@@ -31,7 +31,7 @@
             var value = feature.properties.location_id; // 假設欄位名稱是 "value"
             return {
               fillColor: getColor(value),
-              fillOpacity: 0.7,
+              fillOpacity: 0.5,
               color: 'black',
               weight: 1
             };
