@@ -11,10 +11,10 @@
 
 <body>
 
-  <div id="map" style="width: 1200px; height: 800px;"></div>
+  <div id="map" style="width: 600px; height: 550px;"></div>
 
   <script>
-    var map = L.map('map').setView([40.73439145, -73.95051598], 10);
+    var map = L.map('map').setView([40.71439145, -73.95051598], 10);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -30,7 +30,7 @@
             // 根據欄位的值來設定顏色的深淺
             var value = feature.properties.location_id;
             return {
-              fillColor: getColor(value),
+              fillColor: "#A6A6D2",
               fillOpacity: 0.5,
               color: 'black',
               weight: 1
@@ -47,7 +47,15 @@
             layer.on('mouseover', function (e) {
               var popupContent = values.join("<br>");
               layer.bindPopup(popupContent).openPopup();
+              // 更改圖層的顏色為#5A5AAD
+              layer.setStyle({ fillColor: "#3A006F" });
             });
+
+            // 在滑鼠離開區域時恢復原來的顏色
+            layer.on('mouseout', function (e) {
+              layer.setStyle({ fillColor: "#A6A6D2" });
+            });
+
 
             // 在點擊區域時開啟網頁
             layer.on('click', function (e) {
@@ -58,15 +66,15 @@
       });
 
     // 定義根據值返回不同顏色
-    function getColor(value) {
-      // 設定分色區間
-      return value > 250 ? '#930000' :
-        value > 200 ? '#CE0000' :
-          value > 150 ? '#FF0000' :
-            value > 100 ? '#FF5151' :
-              value > 500 ? '#FF9797' :
-                '#FFD2D2';
-    }
+    // function getColor(value) {
+    //   // 設定分色區間
+    //   return value > 250 ? '#930000' :
+    //     value > 200 ? '#CE0000' :
+    //       value > 150 ? '#FF0000' :
+    //         value > 100 ? '#FF5151' :
+    //           value > 500 ? '#FF9797' :
+    //             '#FFD2D2';
+    // }
 
   </script>
 
