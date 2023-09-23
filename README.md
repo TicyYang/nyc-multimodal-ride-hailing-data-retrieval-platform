@@ -19,6 +19,7 @@
   - Apache ARROW: 11.0.0
 - 環境建置：
   - Ubuntu: 22.04 LTS
+  - VMware Workstation 17 Player
   - Hadoop: 3.3.6
   - Spark: 3.2.4
   - ngrok
