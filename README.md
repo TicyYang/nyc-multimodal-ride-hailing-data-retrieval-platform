@@ -15,8 +15,7 @@
 - 資料預處理：
   - Numpy: 1.25.2
   - Pandas: 1.5.3
-  - Parquet
-  - Apache ARROW: 11.0.0
+  - PyArrow: 11.0.0
 - 環境建置：
   - Ubuntu: 22.04 LTS
   - VMware Workstation 17 Player
