@@ -1,0 +1,1 @@
+time spark-submit --master yarn pyspark_ml_predict_to_csv.py
