@@ -11,17 +11,17 @@ from pyspark.sql.types import IntegerType
 spark = SparkSession.builder.appName("MySparkSession") \
                             .config("spark.memory.offHeap.enabled", "true") \
                             .config("spark.memory.offHeap.size", "3g") \
-							.config("spark.master", "yarn") \
-							.config("spark.driver.cores", "1") \
-							.config("spark.driver.memory", "512m") \
-							.config("spark.executor.instances", "4") \
-							.config("spark.executor.cores", "5") \
-							.config("spark.executor.memory", "5g") \
+                            .config("spark.master", "yarn") \
+                            .config("spark.driver.cores", "1") \
+                            .config("spark.driver.memory", "512m") \
+                            .config("spark.executor.instances", "4") \
+                            .config("spark.executor.cores", "5") \
+                            .config("spark.executor.memory", "5g") \
                             .config("spark.memory.fraction", "0.8") \
-							.config("spark.executor.extraJavaOptions", "-XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+ParallelRefProcEnabled") \
-							.config("spark.driver.extraJavaOptions", "-XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+ParallelRefProcEnabled") \
-							.config("spark.checkpoint.compress", "true") \
-							.getOrCreate()
+                            .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+ParallelRefProcEnabled") \
+                            .config("spark.driver.extraJavaOptions", "-XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:+ParallelRefProcEnabled") \
+                            .config("spark.checkpoint.compress", "true") \
+                            .getOrCreate()
 
 
 df = spark.read.parquet('/dataset/ts/TS6-201902_202306.parquet')
