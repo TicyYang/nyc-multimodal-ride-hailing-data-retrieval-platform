@@ -1,5 +1,4 @@
-# Data Retrieval Platform of NYC Multimodal Ride-Hailing
-# Predictions of NYC multimodal ride-hailing demands  
+# Data Retrieval Platform of NYC Multimodal Ride-Hailing 
 
 ![BDSE31_G4](BDSE31_G4.png)
 
