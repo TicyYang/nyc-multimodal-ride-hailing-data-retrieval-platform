@@ -22,7 +22,7 @@
   - VMware Workstation 17 Player
   - Hadoop: 3.3.6
   - Spark: 3.2.4
-  - ngrok
+  - GCP
 - 機器學習模型建置：
   - scikit-learn: 1.2.2
   - PySpark: 3.4.1
