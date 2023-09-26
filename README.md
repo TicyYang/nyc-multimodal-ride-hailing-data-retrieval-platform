@@ -1,5 +1,4 @@
-# Data Retrieval Platform of NYC Multimodal Ride-Hailing
-# Predictions of NYC multimodal ride-hailing demands  
+# Data Retrieval Platform of NYC Multimodal Ride-Hailing 
 
 ![BDSE31_G4](BDSE31_G4.png)
 
@@ -8,7 +7,7 @@
 
 ## 目錄 & 檔案說明
 - data_preprocessing: 資料預處理與特徵工程程式
-- data_timeseries: 資料預處理轉換存出之時間序列資料
+- data_timeseries: 轉換時間序列資料之程式與資料，最終使用 TS6 版本進行機器學習訓練，TS10 版本用於預測
 - datasets: 特徵工程與視覺化呈現所使用之資料集
 - demo: 視覺化呈現錄影檔，亦可點擊**專案簡介**中的連結至 YouTube 觀看
 - machine_learning: 機器學習訓練與預測程式
