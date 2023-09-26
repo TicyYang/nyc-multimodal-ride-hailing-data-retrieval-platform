@@ -1,4 +1,4 @@
-# Data Retrieval Platform of NYC Multimodal Ride-Hailing 
+# NYC Multimodal Ride-Hailing Data Retrieval Platform
 
 ![BDSE31_G4](BDSE31_G4.png)
 
