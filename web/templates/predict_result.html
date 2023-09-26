@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>需求量預測結果</title>
+
+    <link rel="icon" type="image/x-icon" href="static/images/team/Liang.jpg" />
+    <!-- Font Awesome icons (free version)-->
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet"
+        type="text/css" />
+    <link
+        href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"
+        rel="stylesheet" type="text/css" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="static/css/styles.css" rel="stylesheet" />
+
+
+</head>
+
+<body>
+    <!-- Navigation-->
+    <nav class="navbar navbar-expand-lg navbar-light" id="mainNav">
+        <div class="container px-4 px-lg-5">
+            <a class="navbar-brand" href="{{ url_for('home') }}">多元乘車服務大數據檢索平台</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                Menu
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ms-auto py-4 py-lg-0">
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('home') }}">Home</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4"
+                            href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4"
+                            href="{{ url_for('predict') }}">Prediction</a></li>
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('team') }}">Team</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Page Header-->
+    <header class="masthead" style="background-image: url('static/images/thought-catalog-x5GdvJ-taiQ-unsplash.jpg')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <div class="page-heading">
+                        <h1><a href="{{ url_for('predict') }}">需求量預測</a></h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Select Content-->
+    <div class="search-block">
+        <div class="row">
+            <!-- <form> -->
+            <h3>預測結果</h3>
+            <hr>
+            <div class="row">
+                    <div class="result_block">
+                        <div id="dateDisplay">日期：{{ year }} 年 {{ month }} 月 {{ day }} 日</div>
+                        <div class="result_info">
+                            <div id="result_borough">行政區：{{matched_borough}}</div>
+                            <div id="result_zone">地區：{{matched_zone}}</div>
+                            <div id="result_id">上車區域ID：{{PULocationID}}</div>
+                        </div>
+                    </div>                    
+
+                <div class="s-area-bg2">
+                    <div class="s-area-linechart">乘車需求折線圖</div>
+                    {{ graph_html | safe }}
+                </div>
+                <hr>
+                <div class="s-area-bg1">
+                    <div class="s-area-table">乘車需求表格</div>
+                    <div class="table-container">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Hour</th>
+                                    {% for i in hour %}
+                                    <th>{{ i }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(3) %}
+                                <tr>
+                                    <td>{{ name[i] }}</td>
+                                    {% for j in range(24) %}
+                                    <td>{{ predict[i*24 + j] }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+                <div class="result_btn">
+                    <!-- 重新查詢按鈕 -->
+                    <!-- 原先自己寫的 -->
+                    {% if date.strftime('%Y/%m/%d') > today %}
+                    <div class="btn-group" role="group">
+                        <form action="/previous" method="post">
+                            <input type="hidden" name="year" value="{{ year }}">
+                            <input type="hidden" name="month" value="{{ month }}">
+                            <input type="hidden" name="day" value="{{ day }}">
+                            <input type="hidden" name="PULocationID" value="{{ PULocationID }}">
+                            <input class="button btn-primary btn-sm" type="submit" value="前一天" id="previousDayButton">
+                        </form>
+                    </div>
+                    {% endif %}
+                    <div class="btn-group" role="group">
+                        <input class="button btn-primary btn-sm" type="submit" value="重新預測" onclick="backToHotspot()">
+                    </div>
+                    {% if date.strftime('%Y/%m/%d') < '2023/12/31' %} <div class="btn-group" role="group">
+                        <form action="/next" method="post">
+                            <input type="hidden" name="year" value="{{ year }}">
+                            <input type="hidden" name="month" value="{{ month }}">
+                            <input type="hidden" name="day" value="{{ day }}">
+                            <input type="hidden" name="PULocationID" value="{{ PULocationID }}">
+                            <input class="button btn-primary btn-sm" type="submit" value="後一天" id="nextDayButton">
+                        </form>
+                        {% endif %}
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- </form> -->
+
+    </div>
+    <!-- Bootstrap core JS-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Core theme JS-->
+    <script src="static/js/scripts.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+    <script src="https://cdn.bootcss.com/moment.js/2.18.1/moment-with-locales.min.js"></script>
+
+    <script src="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+
+    <!-- 重新查詢鍵 -->
+    <script>
+        function backToHotspot() {
+            console.log("嗨嗨我跳回查詢頁了")
+            window.location.href = "{{ url_for('predict') }}";
+        }
+    </script>
+
+
+</body>
+
+</html>

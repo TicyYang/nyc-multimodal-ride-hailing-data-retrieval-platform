@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Newwark Airport紐華克機場</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+  <div id="map" style="width: 600px; height: 550px;"></div>
+
+  <script>
+    var map = L.map('map').setView([40.68539145, -74.17551598], 12.5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // 載入 GeoJSON 檔案
+    var geojsonUrl = 'NYC Taxi Zones.geojson';
+    fetch(geojsonUrl)
+      .then(response => response.json())
+      .then(data => {
+        // 過濾只保留屬於Queens的要素
+        var ewrFeatures = data.features.filter(function (feature) {
+          return feature.properties.borough === 'EWR';
+        });
+        var clickedLayer = null;
+        L.geoJSON(ewrFeatures, {
+          style: function (feature) {
+            // 根據欄位的值來設定顏色的深淺
+            var value = feature.properties.location_id;
+            return {
+              fillColor: "#A6A6D2",
+              fillOpacity: 0.5,
+              color: 'black',
+              weight: 1
+            };
+          },
+          onEachFeature: function (feature, layer) {
+            var values = [];
+            // 將多個欄位的值合併成一個文字
+            values.push("Location ID: " + feature.properties.location_id);
+            values.push("Zone: " + feature.properties.zone);
+            values.push("Borough: " + feature.properties.borough);
+
+            // 在游標懸停區域時顯示多個欄位的值
+            layer.on('mouseover', function (e) {
+              var popupContent = values.join("<br>");
+              layer.bindPopup(popupContent).openPopup();
+              if (layer !== clickedLayer) {
+                layer.setStyle({ fillColor: "#3A006F" });
+              }
+            });
+
+            // 在滑鼠離開區域時恢復原來的顏色
+            layer.on('mouseout', function (e) {
+              if (layer !== clickedLayer) {
+                layer.setStyle({ fillColor: "#A6A6D2" });
+              }
+            });
+
+
+            // 在點擊區域時開啟網頁
+            layer.on('click', function (e) {
+              var location_id = feature.properties.location_id;
+              var locationIDContainer = parent.window.document.getElementById('PULocationID');
+              locationIDContainer.value = location_id;
+
+              // 恢復之前點擊的區塊的顏色
+              if (clickedLayer !== null && clickedLayer !== layer) {
+                clickedLayer.setStyle({ fillColor: "#A6A6D2" });
+              }
+
+              layer.setStyle({ fillColor: "#3A006F" });
+
+              // 更新當前點擊的區塊
+              clickedLayer = layer;
+            });
+          }
+        }).addTo(map);
+      });
+
+// 定義根據值返回不同顏色
+// function getColor(value) {
+//   // 設定分色區間
+//   return value > 250 ? '#930000' :
+//     value > 200 ? '#CE0000' :
+//       value > 150 ? '#FF0000' :
+//         value > 100 ? '#FF5151' :
+//           value > 500 ? '#FF9797' :
+//             '#FFD2D2';
+// }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+將 uwsgi.ini 放在 app.py 相同目錄下，
+nginx.conf 放在 /etc/nginx/sites-available/，(建議把default刪掉)
+進入 /etc/nginx/sites-enabled，
+sudo ln -s /etc/nginx/sites-available/nginx.conf(建立連結)，(建議把default刪掉)
+sudo service nginx restart(重啟nginx服務)，
+使用 uwsgi --ini uwsgi.ini，
+就可以使用瀏覽器輸入IP打開網頁了!

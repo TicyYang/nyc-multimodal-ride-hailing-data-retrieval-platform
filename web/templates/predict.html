@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>需求量預測</title>
+
+    <link rel="icon" type="image/x-icon" href="static/images/team/Liang.jpg" />
+    <!-- Font Awesome icons (free version)-->
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet"
+        type="text/css" />
+    <link
+        href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"
+        rel="stylesheet" type="text/css" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="static/css/styles.css" rel="stylesheet" />
+
+    <!-- 日期選擇器二開始https://pluscdev.com/tutorial-air-datepicker/ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Air datepicker Css -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/air-datepicker@3.3.5/air-datepicker.min.css" rel="stylesheet">  -->
+    <!-- 抓網上的css-->
+    <link rel="stylesheet" href="static/air-datepicker-3/dist/air-datepicker.css"> <!-- 有下css檔-->
+    <!-- 日期選擇器二結束 -->
+    <!-- 地圖開始 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- 地圖結束 -->
+
+</head>
+
+<body>
+    <!-- 最上排工具列開始-->
+    <nav class="navbar navbar-expand-lg navbar-light" id="mainNav">
+        <div class="container px-4 px-lg-5">
+            <a class="navbar-brand" href="{{ url_for('home') }}">多元乘車服務大數據檢索平台</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                Menu
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ms-auto py-4 py-lg-0">
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('home') }}">Home</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4"
+                            href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4"
+                            href="{{ url_for('predict') }}">Prediction</a></li>
+                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('team') }}">Team</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- 最上排工具列結束-->
+    <!-- Page Header-->
+    <header class="masthead" style="background-image: url('static/images/thought-catalog-x5GdvJ-taiQ-unsplash.jpg')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <div class="page-heading">
+                        <h1><a href="{{ url_for('predict') }}">需求量預測</a></h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- 主要內容-->
+    <div class="search-block">
+        <form method="post">
+            <h3>需求量預測</h3>
+            <hr />
+            <!-- **********測試開始********** -->
+            <div class="row ">
+                <!-- 日期選擇二 (Air datepicker) -->
+                <div class="col-5">
+                    <label for="">日期：</label>
+                    <!-- Air datepicker Html element -->
+                    <input id="myDatepicker" data-language="en" placeholder="年/月/日" autocomplete="off" name="date"
+                        readonly />
+                </div>
+                <!-- 行政區選擇 -->
+                <div class="col-5">
+                    <label for="">地區：</label>
+                    <select id="areaSelect" class="form-select" aria-label="Small select example"
+                        onchange="changeMap()">
+                        <option selected>Select</option>
+                        <option value="曼哈頓">Manhattan</option>
+                        <option value="布魯克林區">Brooklyn</option>
+                        <option value="皇后區">Queens</option>
+                        <option value="布朗克斯">Bronx</option>
+                        <option value="史泰登島">Staten Island</option>
+                        <option value="紐華克機場">Newark Airport</option>
+                    </select>
+                </div>
+                <!-- 小區域ID呈現 -->
+                <div class="col-5 locationid">
+                    <label for="PULocationID">上車區域ID：</label>
+                    <input type="text" class="PULocationID" id="PULocationID" placeholder="請點擊下方地圖👇🏻"
+                        name="PULocationID" readonly />
+                    <!-- 原本class還有form-control移除了 -->
+                </div>
+                <!-- 查詢和清除按鈕 -->
+                <div class="col-12 col-md-2 d-flex justify-content-center align-items-center">
+                    <div class=" btn-group" role="group">
+                        <input class="button btn-primary btn-sm" type="submit" value="預測"
+                            onclick="return validateForm();" />
+
+                        <input class="button btn-primary btn-sm" type="reset" value="清除" onclick="clearFormFields()" />
+                    </div>
+                </div>
+
+                <!-- 地圖開始 -->
+                <!-- 嵌入 leaflet_with_multi_color.html -->
+                <div class="map">
+                    <iframe id="mapFrame" src="static/leaflet_with_multi_color.html" width="650" height="600"></iframe>
+                </div>
+
+                <!-- 地圖結束 -->
+            </div>
+        </form>   
+    </div>
+    <!-- Bootstrap core JS-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Core theme JS-->
+    <script src="static/js/scripts.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+    <script src="https://cdn.bootcss.com/moment.js/2.18.1/moment-with-locales.min.js"></script>
+
+    <!-- 日期選擇器二開始 -->
+    <script src="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+
+
+    <!-- Air datepicker JavaScript-->
+    <script src="https://cdn.jsdelivr.net/npm/air-datepicker@3.4.0/air-datepicker.min.js"></script>
+    <script>
+        // Call Air datepicker function
+        new AirDatepicker('#myDatepicker');
+    </script>
+    <script>
+        const en = {
+            days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+            daysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            daysMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            today: 'Today',
+            clear: 'Clear',
+            dateFormat: 'yyyy/MM/dd',
+            // timeFormat: 'hh:mm aa',  //時間選擇
+            firstDay: 0
+        }
+        // const minDate = moment('2023-09-26', 'YYYY-MM-DD');
+        const minDate = moment(); // 使用moment.js獲取當前日期
+        const maxDate = moment('2023-12-31', 'YYYY-MM-DD');
+
+        const datepicker = new AirDatepicker('#myDatepicker', {
+            locale: en, 
+            minDate: minDate, //顯示最小天數
+            maxDate: maxDate
+            // maxDate: moment().add(98, 'days'), //顯示最大天數，90為最大的顯示範圍為三個月為限
+        })
+
+        const printCurrentTime = () => {
+            console.log(datepicker.selectedDates) // print selected date
+        }
+
+    </script>
+    <!-- 日期選擇器二結束 -->
+
+    <!-- 清除鍵開始 -->
+    <script>
+        function clearFormFields() {
+            // 重置地圖為原始地圖
+            console.log("change Original Map");
+            var mapFrame = document.getElementById("mapFrame");
+            mapFrame.src = "static/leaflet_with_multi_color.html";
+
+            // 清除日期選擇框的值
+            document.querySelector('input[type="date"]').value = '';
+            // 清除行政區和地點類型選擇框的選中狀態
+            document.querySelector('select[name="district"]').selectedIndex = 0;
+            document.querySelector('select[name="locationType"]').selectedIndex = 0;
+        }
+    </script>
+    <!-- 清除鍵結束 -->
+
+    <!-- 下拉式選單選擇小區域的地圖變換開始 -->
+    <script>
+        function changeMap() {
+            console.log("changeMap function called"); // 檢查函數是否被調用
+            var areaSelect = document.getElementById("areaSelect");
+            var mapFrame = document.getElementById("mapFrame");
+
+            // 定義不同地區對應的地圖頁面
+            var mapPages = {
+                "曼哈頓": "map_manhattan.html",
+                "布魯克林區": "map_brooklyn.html",
+                "皇后區": "map_queens.html",
+                "布朗克斯": "map_bronx.html",
+                "史泰登島": "map_statenisland.html",
+                "紐華克機場": "map_ewr.html"
+            };
+
+            // 根據選擇的地區更改 iframe 的 src 屬性
+            var selectedArea = areaSelect.value;
+            if (mapPages.hasOwnProperty(selectedArea)) {
+                mapFrame.src = 'static/' + mapPages[selectedArea];
+            }
+        }
+    </script>
+    <!-- 下拉式選單選擇小區域的地圖變換結束 -->
+
+    <script>
+        function validateForm() {
+            var dateField = document.getElementById("myDatepicker");
+            var areaField = document.getElementById("areaSelect");
+            var idField = document.getElementById("PULocationID");
+
+            if (dateField.value === "" && areaField.value === "Select" && idField.value === "") {
+                alert("請選擇日期、地區、上車區域ID！");
+                return false;
+            }
+
+            if (dateField.value === "" && idField.value === "") {
+                alert("請選擇日期、上車區域ID！");
+                return false;
+            }
+
+            if (areaField.value === "Select" && idField.value === "") {
+                alert("請選擇地區、上車區域ID！");
+                return false;
+            }
+
+            if (dateField.value === "") {
+                alert("請選擇日期！");
+                return false;
+            }
+
+            if (areaField.value === "Select") {
+                alert("請選擇地區！");
+                return false;
+            }
+
+            if (idField.value === "") {
+                alert("請選擇上車區域ID！");
+                return false;
+            }
+
+            // 所有條件滿足才提交
+            return true;
+        }
+    </script>
+</body>
+
+</html>
