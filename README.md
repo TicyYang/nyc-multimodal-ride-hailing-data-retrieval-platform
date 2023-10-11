@@ -1,7 +1,5 @@
 # NYC Multimodal Ride-Hailing Data Retrieval Platform
 
-![BDSE31_G4](BDSE31_G4.png)
-
 ## 專案簡介
 美國紐約市每月約有 2300 萬筆出租車乘車紀錄，相當於每天就有超過 70 萬乘車需求，對於出租車企業，能夠精準的調度車輛，直接影響了其經營績效和市占率。本專案藉由分析紐約市計程車協會 (TLC) 的乘車紀錄資料集 (Trip Record Data)，開發具備預測、檢索乘車需求量功能之**大數據平台**。 
 
