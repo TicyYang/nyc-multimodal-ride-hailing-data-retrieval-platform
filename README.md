@@ -5,9 +5,11 @@
 ## 專案簡介
 美國紐約市每月約有 2300 萬筆出租車乘車紀錄，相當於每天就有超過 70 萬乘車需求，對於出租車企業，能夠精準的調度車輛，直接影響了其經營績效和市占率。本專案藉由分析紐約市計程車協會 (TLC) 的乘車紀錄資料集 (Trip Record Data)，開發具備預測、檢索乘車需求量功能之**大數據平台**。 
 
-## 專案介紹影片
-- **[完整專案報告](https://www.youtube.com/watch?v=-n5lJlV2XCI)**  
-- **[網頁查詢、視覺化儀表板功能](https://youtu.be/8SKvn0fmuLI)**
+## 專案簡報、影片
+- **[專案簡報](https://github.com/TicyYang/NYC_Multimodal_Ride-Hailing_Data_Retrieval_Platform/blob/main/presentation.md)**
+- 專案影片：
+  - **[完整專案報告](https://www.youtube.com/watch?v=-n5lJlV2XCI)**
+  - **[網頁查詢、視覺化儀表板功能](https://youtu.be/8SKvn0fmuLI)**
 
 ## 目錄 & 檔案說明
 - data_preprocessing: 資料預處理與特徵工程程式
