@@ -54,7 +54,7 @@ New York City sees approximately 23 million taxi ride records each month, it equ
       <td>11.0.0</td>
     </tr>
     <tr>
-      <td rowspan="5" style="text-align: center;"><strong>Environment Setup</strong></td>
+      <td rowspan="4" style="text-align: center;"><strong>Environment Setup</strong></td>
       <td>Ubuntu</td>
       <td>22.04 LTS</td>
     </tr>
@@ -71,10 +71,6 @@ New York City sees approximately 23 million taxi ride records each month, it equ
       <td>3.2.4</td>
     </tr>
     <tr>
-      <td>GCP</td>
-      <td></td>
-    </tr>
-    <tr>
       <td rowspan="2" style="text-align: center;"><strong>Machine Learning Model Building</strong></td>
       <td>scikit-learn</td>
       <td>1.2.2</td>
@@ -83,19 +79,7 @@ New York City sees approximately 23 million taxi ride records each month, it equ
       <td>PySpark</td>
       <td>3.4.1</td>
     <tr>
-      <td rowspan="7" style="text-align: center;"><strong>Visualization</strong></td>
-      <td>HTML5</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>CSS3</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>JavaScript</td>
-      <td></td>
-    </tr>
-    <tr>
+      <td rowspan="4" style="text-align: center;"><strong>Visualization</strong></td>
       <td>Flask</td>
       <td>2.3.2</td>
     </tr>
